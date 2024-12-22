@@ -78,7 +78,7 @@ client.on('message', async (channel, tags, message, self) => { // Marked as asyn
   }
 
   //sending animation
-  if (message === 'send anime gif') {
+  if (message === '#gif anime') {
     try {
       if (messages.length === 0) {
         messages = await loadMessages();
