@@ -2,6 +2,7 @@ require('dotenv').config();
 const fs = require('fs');
 const tmi = require('tmi.js');
 const fetch = require('node-fetch'); // Ensure you install this with `npm install node-fetch`
+const cooldowns = new Map();
 
 let messages = [];
 
@@ -21,16 +22,16 @@ const opts = {
 };
 
 const loadMessages = () => {
-    return new Promise((resolve, reject) => {
-        fs.readFile('kawaiiDance.txt', 'utf8', (err, data) => {
-            if (err) {
-                reject('Error reading file:', err);
-            } else {
-                const lines = data.split('\n').filter(line => line.trim() !== '');
-                resolve(lines);
-            }
-        });
+  return new Promise((resolve, reject) => {
+    fs.readFile('kawaiiDance.txt', 'utf8', (err, data) => {
+      if (err) {
+        reject('Error reading file:', err);
+      } else {
+        const lines = data.split('\n').filter(line => line.trim() !== '');
+        resolve(lines);
+      }
     });
+  });
 };
 
 // Create a client
@@ -48,7 +49,7 @@ async function changeColor(color) {
     },
     body: JSON.stringify({ color })
   };
-
+  
   try {
     const response = await fetch(url, options);
     if (response.status === 204) {
@@ -65,41 +66,47 @@ async function changeColor(color) {
 //Register event handlers
 client.on('message', async (channel, tags, message, self) => { // Marked as async
   if (self) return; // Ignore bot's own messages
-
+  
+  //basic hi response command
   if (message === 'hi') {
-    client.say(channel, `MrDestructoid hi ${tags.username}!`);
+    client.say(channel, `MrDestructoid hi ${tags.username}`);
   }
 
+  //joining raids
+  if(tags.username === `deepdankdungeonbot` && message.includes(`A Raid Event at Level`)){
+    setTimeout(() => client.say(channel, `+join`), (2+90*Math.random())*1000);
+  }
+
+  //sending animation
   if (message === 'send anime gif') {
     try {
-        if (messages.length === 0) {
-            messages = await loadMessages();
+      if (messages.length === 0) {
+        messages = await loadMessages();
+      }
+      
+      // Send each message with a delay
+      let messageIndex = 0;
+      
+      const sendNextMessage = () => {
+        if (messageIndex < messages.length) {
+          client.say(channel, messages[messageIndex])
+          .then(() => {
+            messageIndex++;
+            setTimeout(sendNextMessage, 75);
+          })
+          .catch(console.error);
+        } else {
+          console.log('All messages sent!');
         }
-
-        // Send each message with a delay
-        let messageIndex = 0;
-
-        const sendNextMessage = () => {
-            if (messageIndex < messages.length) {
-                client.say(channel, messages[messageIndex])
-                    .then(() => {
-                        //console.log(`Sent message ${messageIndex + 1}: ${messages[messageIndex]}`);
-                        messageIndex++;
-                        setTimeout(sendNextMessage, 75);
-                    })
-                    .catch(console.error);
-            } else {
-                console.log('All messages sent!');
-            }
-        };
-
-        sendNextMessage();
+      };
+      
+      sendNextMessage();
     } catch (error) {
-        console.error('Error:', error);
-        client.say(channel, 'An error occurred while sending messages.');
+      console.error('Error:', error);
+      client.say(channel, 'An error occurred while sending messages.');
     }
-}
-
+  }
+  
   // Color changing codes
   const matchedColor = colors.find(color => message.toLowerCase().includes(color.toLowerCase()));
   if (matchedColor) {
