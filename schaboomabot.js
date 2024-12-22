@@ -12,6 +12,10 @@ const colors = [
   `SeaGreen`, `SpringGreen`, `YellowGreen`
 ];
 
+const animations = [
+  `anime`, `fors`
+];
+
 // Bot configuration from .env
 const opts = {
   identity: {
@@ -21,9 +25,10 @@ const opts = {
   channels: [process.env.TWITCH_CHANNEL]
 };
 
-const loadMessages = () => {
+//loading messages for #gif command
+const loadMessages = (fileName) => {
   return new Promise((resolve, reject) => {
-    fs.readFile('kawaiiDance.txt', 'utf8', (err, data) => {
+    fs.readFile(fileName, 'utf8', (err, data) => {
       if (err) {
         reject('Error reading file:', err);
       } else {
@@ -78,10 +83,17 @@ client.on('message', async (channel, tags, message, self) => { // Marked as asyn
   }
 
   //sending animation
-  if (message === '#gif anime') {
+  if (message.startsWith('#gif ')) {
+    const parts = message.split(' ');
+    const animationName = parts[1];
+
+    //return if "#gif with unnacceptable animation name following"
+    if(!animations.includes(animationName))
+      return;
+
     try {
       if (messages.length === 0) {
-        messages = await loadMessages();
+        messages = await loadMessages(`${animationName}.txt`);
       }
       
       // Send each message with a delay
@@ -108,7 +120,7 @@ client.on('message', async (channel, tags, message, self) => { // Marked as asyn
   }
   
   // Color changing codes
-  const matchedColor = colors.find(color => message.toLowerCase().includes(color.toLowerCase()));
+  const matchedColor = colors.find(color => new RegExp(`\\b${color.toLowerCase()}\\b`).test(message.toLowerCase()));
   if (matchedColor) {
     // Change the color via Helix API
     await changeColor(matchedColor.toLowerCase()); // Use await here
