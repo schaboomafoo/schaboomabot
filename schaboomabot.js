@@ -92,9 +92,7 @@ client.on('message', async (channel, tags, message, self) => { // Marked as asyn
       return;
 
     try {
-      if (messages.length === 0) {
-        messages = await loadMessages(`${animationName}.txt`);
-      }
+      messages = await loadMessages(`${animationName}.txt`);
       
       // Send each message with a delay
       let messageIndex = 0;
