@@ -84,6 +84,14 @@ int** recursiveGeneration(int** previous, int n, int remaining){
         }
     }
 
+    int** inflatedShuff = (int**)malloc((len+2) * sizeof(int*));
+    for (int i = 0; i < len+2; i++) {
+        inflatedShuff[i] = (int*)malloc((len+2) * sizeof(int));
+        for (int j = 0; j < len+2; j++) {
+            inflatedShuff[i][j] = 0; //full of (empty)
+        }
+    }
+
     //destruction step
     //iterate from top left to bottom right, check each horizontal domino if it's south
     //if it's south, check if the domino directly below it is also horizontal, if so, delete the block
@@ -116,11 +124,6 @@ int** recursiveGeneration(int** previous, int n, int remaining){
     for(int i=0; i<len; i++){
         for(int j=0; j<len-1; j++){ //doesn't scan rightmost column
             if(previous[i][j]==2 && previous[i][j+1]==2 && (i+j)%2 != n%2){ //(i+j)%2 != n%2 means EAST domino
-                if(i == len-1) { // FIXME: remove
-                    printf("\n\n\n\n\n\n\n\nSCHA KILLED WOW RETARDDDDDDDDDDDDDDDDDDDDDD\n");
-                    printArray(previous, len);
-                    printf("\n\n\n\n\n\n");
-                }
                 previous[i][j]   = 0; previous[i][j+1]   = 0;
                 previous[i+1][j] = 0; previous[i+1][j+1] = 0;
             }
@@ -178,57 +181,41 @@ int** recursiveGeneration(int** previous, int n, int remaining){
     printArray(inflated, len+2);
 
 
-    //shuffling step (likely inefficient method)
-    //ok this is dank, but 5-8 now represents dominos that have moved once already
-    //since some will be blocked by future moving dominos, multiple iterations are required
-    int done = 0;//bool
-    while(!done){
-        done=1;
-        for(int i=1; i<len+1; i++){
-            for(int j=1; j<len+1; j++){
-                 //moving north up
-                if(inflated[i][j]==1 && (i+j)%2 != n%2 && inflated[i-1][j] == 0 && inflated[i-1][j+1] == 0){ //not sure if last condition is ever required
-                    done=0;
-                    inflated[i-1][j] = 5; inflated[i-1][j+1] = 7;
-                    inflated[i][j]   = 0; inflated[i][j+1]   = 0;
-                }
+    //shuffling step
+    //move dominos into second array temporarily to avoid issues from overlapping dominos
+    for(int i=1; i<len+1; i++){
+        for(int j=1; j<len+1; j++){
+                //moving north up
+            if(inflated[i][j]==1 && (i+j)%2 != n%2){ //not sure if last condition is ever required
+                inflatedShuff[i-1][j] = 1; inflatedShuff[i-1][j+1] = 3;
+            }
 
-                //moving east right
-                else if(inflated[i][j]==2 && (i+j)%2 == n%2 && inflated[i][j+1] == 0 && inflated[i+1][j+1] == 0){
-                    done=0;
-                    inflated[i][j]   = 0; inflated[i][j+1]   = 6;
-                    inflated[i+1][j] = 0; inflated[i+1][j+1] = 8;
-                }
+            //moving east right
+            else if(inflated[i][j]==2 && (i+j)%2 == n%2){
+                inflatedShuff[i][j+1]   = 2;
+                inflatedShuff[i+1][j+1] = 4;
+            }
 
-                //moving south down
-                else if(inflated[i][j]==1 && (i+j)%2 == n%2 && inflated[i+1][j] == 0 && inflated[i+1][j+1] == 0){
-                    done=0;
-                    inflated[i][j]   = 0; inflated[i][j+1]   = 0;
-                    inflated[i+1][j] = 5; inflated[i+1][j+1] = 7;
-                }
+            //moving south down
+            else if(inflated[i][j]==1 && (i+j)%2 == n%2){
+                inflatedShuff[i+1][j] = 1; inflatedShuff[i+1][j+1] = 3;
+            }
 
-                //moving west left
-                else if(inflated[i][j]==2 && (i+j)%2 != n%2 && inflated[i][j-1] == 0 && inflated[i+1][j-1] == 0){
-                    done=0;
-                    inflated[i][j-1]   = 6; inflated[i][j]   = 0;
-                    inflated[i+1][j-1] = 8; inflated[i+1][j] = 0;
-                }
+            //moving west left
+            else if(inflated[i][j]==2 && (i+j)%2 != n%2){
+                inflatedShuff[i][j-1]   = 2;
+                inflatedShuff[i+1][j-1] = 4;
             }
         }
-
-        printf("ORDER %d AFTER A SHUFFLING ITERATION STEP: \n",n);
-        printArray(inflated, len+2);
     }
 
-    //now finally correcting from 5-8 to 1-4 again
     for(int i=0; i<len+2; i++){
         for(int j=0; j<len+2; j++){
-            if(inflated[i][j]!=-1 && inflated[i][j]!=8 && inflated[i][j]!=4)
-                inflated[i][j] = inflated[i][j]%4;
-            else if(inflated[i][j]==8)
-                inflated[i][j] = 4;
+            if(inflated[i][j]!=-1)
+                inflated[i][j]=inflatedShuff[i][j];
         }
     }
+
 
     printf("ORDER %d AFTER SHUFFLING COMPLETION: \n",n);
     printArray(inflated, len+2);
@@ -238,6 +225,11 @@ int** recursiveGeneration(int** previous, int n, int remaining){
         free(previous[i]);
     }
     free(previous);
+
+    for(int i=0; i<len+2; i++){
+        free(inflatedShuff[i]);
+    }
+    free(inflatedShuff);
 
     return recursiveGeneration(inflated, n, --remaining);
 }
@@ -252,7 +244,7 @@ void printArray(int **input, int size){
                 printf("[   ] ");
             else
                 printf("[ %d ] ",input[i][j]);
-/*
+            /*
             else if(((input[i][j] == 1 || input[i][j] == 5) && (i+j)%2==0) || ((input[i][j]==3 || input[i][j]==7) && (i+j)%2==1))
                 printf("[ N ] ");
             else if(((input[i][j] == 1 || input[i][j] == 5) && (i+j)%2==1) || ((input[i][j]==3 || input[i][j]==7) && (i+j)%2==0))
@@ -261,35 +253,9 @@ void printArray(int **input, int size){
                 printf("[ W ] ");
             else if(((input[i][j] == 2 || input[i][j] == 6) && (i+j)%2==1) || ((input[i][j]==4 || input[i][j]==8) && (i+j)%2==0))
                 printf("[ E ] ");
-                */
+            */
         }
         printf("\n");
     }
     printf("\n");
 }
-
-/*
-ORDER 4 AFTER SHUFFLING COMPLETION: 
-[XXX] [XXX] [XXX] [XXX] [ N ] [ N ] [XXX] [XXX] [XXX] [XXX] 
-[XXX] [XXX] [XXX] [   ] [   ] [ N ] [ N ] [XXX] [XXX] [XXX] 
-[XXX] [XXX] [ W ] [   ] [ W ] [   ] [ N ] [ N ] [XXX] [XXX] 
-[XXX] [ W ] [ W ] [   ] [ W ] [ W ] [   ] [   ] [   ] [XXX] 
-[ W ] [ W ] [   ] [ S ] [ S ] [ W ] [ N ] [ N ] [   ] [ E ] 
-[ W ] [ W ] [   ] [ W ] [ S ] [ S ] [ E ] [   ] [ E ] [ E ] 
-[XXX] [ W ] [   ] [ W ] [   ] [   ] [ E ] [   ] [ E ] [XXX] 
-[XXX] [XXX] [   ] [   ] [ S ] [ S ] [   ] [   ] [XXX] [XXX] 
-[XXX] [XXX] [XXX] [ S ] [ S ] [ S ] [ S ] [XXX] [XXX] [XXX] 
-[XXX] [XXX] [XXX] [XXX] [ S ] [ S ] [XXX] [XXX] [XXX] [XXX] //this formation breaks the algorithm
-
-
-[XXX] [XXX] [XXX] [XXX] [ N ] [ N ] [XXX] [XXX] [XXX] [XXX] 
-[XXX] [XXX] [XXX] [   ] [   ] [ N ] [ N ] [XXX] [XXX] [XXX] 
-[XXX] [XXX] [ W ] [   ] [   ] [ E ] [ N ] [ N ] [XXX] [XXX] 
-[XXX] [ W ] [ W ] [ N ] [ N ] [ E ] [ E ] [   ] [   ] [XXX] 
-[ W ] [ W ] [   ] [   ] [ N ] [ N ] [ E ] [   ] [   ] [ E ] 
-[ W ] [ W ] [   ] [   ] [ E ] [ W ] [ S ] [ S ] [ E ] [ E ] 
-[XXX] [ W ] [   ] [   ] [ E ] [ W ] [   ] [   ] [ E ] [XXX] 
-[XXX] [XXX] [   ] [   ] [ S ] [ S ] [   ] [   ] [XXX] [XXX] 
-[XXX] [XXX] [XXX] [ S ] [ S ] [ S ] [ S ] [XXX] [XXX] [XXX] 
-[XXX] [XXX] [XXX] [XXX] [ S ] [ S ] [XXX] [XXX] [XXX] [XXX] 
-*/
