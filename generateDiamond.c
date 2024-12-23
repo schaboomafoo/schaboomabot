@@ -194,21 +194,21 @@ int** recursiveGeneration(int** previous, int n, int remaining){
                 }
 
                 //moving east right
-                if(inflated[i][j]==2 && (i+j)%2 == n%2 && inflated[i][j+1] == 0 && inflated[i+1][j+1] == 0){
+                else if(inflated[i][j]==2 && (i+j)%2 == n%2 && inflated[i][j+1] == 0 && inflated[i+1][j+1] == 0){
                     done=0;
                     inflated[i][j]   = 0; inflated[i][j+1]   = 6;
                     inflated[i+1][j] = 0; inflated[i+1][j+1] = 8;
                 }
 
                 //moving south down
-                if(inflated[i][j]==1 && (i+j)%2 == n%2 && inflated[i+1][j] == 0 && inflated[i+1][j+1] == 0){
+                else if(inflated[i][j]==1 && (i+j)%2 == n%2 && inflated[i+1][j] == 0 && inflated[i+1][j+1] == 0){
                     done=0;
                     inflated[i][j]   = 0; inflated[i][j+1]   = 0;
                     inflated[i+1][j] = 5; inflated[i+1][j+1] = 7;
                 }
 
                 //moving west left
-                if(inflated[i][j]==2 && (i+j)%2 != n%2 && inflated[i][j-1] == 0 && inflated[i+1][j-1] == 0){
+                else if(inflated[i][j]==2 && (i+j)%2 != n%2 && inflated[i][j-1] == 0 && inflated[i+1][j-1] == 0){
                     done=0;
                     inflated[i][j-1]   = 6; inflated[i][j]   = 0;
                     inflated[i+1][j-1] = 8; inflated[i+1][j] = 0;
@@ -250,6 +250,9 @@ void printArray(int **input, int size){
                 printf("[XXX] ");
             else if(input[i][j] == 0)
                 printf("[   ] ");
+            else
+                printf("[ %d ] ",input[i][j]);
+/*
             else if(((input[i][j] == 1 || input[i][j] == 5) && (i+j)%2==0) || ((input[i][j]==3 || input[i][j]==7) && (i+j)%2==1))
                 printf("[ N ] ");
             else if(((input[i][j] == 1 || input[i][j] == 5) && (i+j)%2==1) || ((input[i][j]==3 || input[i][j]==7) && (i+j)%2==0))
@@ -258,8 +261,35 @@ void printArray(int **input, int size){
                 printf("[ W ] ");
             else if(((input[i][j] == 2 || input[i][j] == 6) && (i+j)%2==1) || ((input[i][j]==4 || input[i][j]==8) && (i+j)%2==0))
                 printf("[ E ] ");
+                */
         }
         printf("\n");
     }
     printf("\n");
 }
+
+/*
+ORDER 4 AFTER SHUFFLING COMPLETION: 
+[XXX] [XXX] [XXX] [XXX] [ N ] [ N ] [XXX] [XXX] [XXX] [XXX] 
+[XXX] [XXX] [XXX] [   ] [   ] [ N ] [ N ] [XXX] [XXX] [XXX] 
+[XXX] [XXX] [ W ] [   ] [ W ] [   ] [ N ] [ N ] [XXX] [XXX] 
+[XXX] [ W ] [ W ] [   ] [ W ] [ W ] [   ] [   ] [   ] [XXX] 
+[ W ] [ W ] [   ] [ S ] [ S ] [ W ] [ N ] [ N ] [   ] [ E ] 
+[ W ] [ W ] [   ] [ W ] [ S ] [ S ] [ E ] [   ] [ E ] [ E ] 
+[XXX] [ W ] [   ] [ W ] [   ] [   ] [ E ] [   ] [ E ] [XXX] 
+[XXX] [XXX] [   ] [   ] [ S ] [ S ] [   ] [   ] [XXX] [XXX] 
+[XXX] [XXX] [XXX] [ S ] [ S ] [ S ] [ S ] [XXX] [XXX] [XXX] 
+[XXX] [XXX] [XXX] [XXX] [ S ] [ S ] [XXX] [XXX] [XXX] [XXX] //this formation breaks the algorithm
+
+
+[XXX] [XXX] [XXX] [XXX] [ N ] [ N ] [XXX] [XXX] [XXX] [XXX] 
+[XXX] [XXX] [XXX] [   ] [   ] [ N ] [ N ] [XXX] [XXX] [XXX] 
+[XXX] [XXX] [ W ] [   ] [   ] [ E ] [ N ] [ N ] [XXX] [XXX] 
+[XXX] [ W ] [ W ] [ N ] [ N ] [ E ] [ E ] [   ] [   ] [XXX] 
+[ W ] [ W ] [   ] [   ] [ N ] [ N ] [ E ] [   ] [   ] [ E ] 
+[ W ] [ W ] [   ] [   ] [ E ] [ W ] [ S ] [ S ] [ E ] [ E ] 
+[XXX] [ W ] [   ] [   ] [ E ] [ W ] [   ] [   ] [ E ] [XXX] 
+[XXX] [XXX] [   ] [   ] [ S ] [ S ] [   ] [   ] [XXX] [XXX] 
+[XXX] [XXX] [XXX] [ S ] [ S ] [ S ] [ S ] [XXX] [XXX] [XXX] 
+[XXX] [XXX] [XXX] [XXX] [ S ] [ S ] [XXX] [XXX] [XXX] [XXX] 
+*/
