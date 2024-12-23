@@ -69,6 +69,7 @@ int** recursiveGeneration(int** previous, int n, int remaining){
         }
     }
 
+    printf("ORDER %d AFTER INSERTION STEP\n");
     printArray(previous, 2);
 
     //holes filled, check if recursion is complete
@@ -84,7 +85,28 @@ int** recursiveGeneration(int** previous, int n, int remaining){
     //if it's an east domino, check if the domino directly to the right is vertical as well
     //if so, delete it
 
+    //destroying bad horizontal blocks
+    for(int i=0; i<n*2+2-1; i++){ //doesn't scan bottom row
+        for(int j=0; j<n*2+2; j++){
+            if(previous[i][j]==1 && previous[i+1][j]==1 && (i+j)%2 != n%2){ //(i+j)%2 != n%2 means SOUTH domino
+                previous[i][j]   = 0; previous[i][j+1]   = 0;
+                previous[i+1][j] = 0; previous[i+1][j+1] = 0;
+            }
+        }
+    }
 
+    //destroying bad vertical blocks
+    for(int i=0; i<n*2+2; i++){
+        for(int j=0; j<n*2+2-1; j++){ //doesn't scan rightmost column
+            if(previous[i][j]==2 && previous[i][j+1]==2 && (i+j)%2 != n%2){ //(i+j)%2 != n%2 means EAST domino
+                previous[i][j]   = 0; previous[i][j+1]   = 0;
+                previous[i+1][j] = 0; previous[i+1][j+1] = 0;
+            }
+        }
+    }
+
+
+    //inflation step
     return recursiveGeneration(inflated, ++n, --remaining);
 }
 
