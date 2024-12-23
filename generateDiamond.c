@@ -12,15 +12,15 @@ int main(int argc, char* argv[]){
     int order=atoi(argv[1]);
 
     int** base = (int**)malloc(2 * sizeof(int*));
-    for (int i = 0; i < 2; i++) {
+    for (int i = 0; i < 2; i++){
         base[i] = (int*)malloc(2 * sizeof(int));
-        for (int j = 0; j < 2; j++) {
+        for (int j = 0; j < 2; j++){
             base[i][j] = 0; // Initialize base with -1
         }
     }
 
     int** tiling = (int**)malloc(order * 2 * sizeof(int*));
-    for (int i = 0; i < order * 2; i++) {
+    for (int i = 0; i < order * 2; i++){
         tiling[i] = (int*)malloc(order * 2 * sizeof(int));
     }
 
@@ -30,7 +30,7 @@ int main(int argc, char* argv[]){
 
     tiling = recursiveGeneration(base, 0, order);
 
-    printArray(tiling, 4);
+    printArray(tiling, order*2+2);
 }
 
 //start with array of all zeros (ZERO MEANS HOLE -1 MEANS BOUNDARY)
@@ -44,10 +44,10 @@ int main(int argc, char* argv[]){
 int** recursiveGeneration(int** previous, int n, int remaining){
     int len=n*2+2; //length and width of inserted (previous array)
     //generate new array to enlarge and eventually fill / transfer
-    int** inflated = (int**)malloc(2*n+4 * sizeof(int*));
-    for (int i = 0; i < 2*n+4; i++) {
-        inflated[i] = (int*)malloc(2*n+4 * sizeof(int));
-        for (int j = 0; j < 2*n+4; j++) {
+    int** inflated = (int**)malloc(len+2 * sizeof(int*));
+    for (int i = 0; i < len+2; i++) {
+        inflated[i] = (int*)malloc(len+2 * sizeof(int));
+        for (int j = 0; j < len+2; j++) {
             inflated[i][j] = -1; //full of boundary initially
         }
     }
@@ -70,8 +70,8 @@ int** recursiveGeneration(int** previous, int n, int remaining){
         }
     }
 
-    printf("ORDER %d AFTER INSERTION STEP\n");
-    printArray(previous, 2);
+    printf("ORDER %d AFTER INSERTION STEP: \n",n);
+    printArray(previous, len);
 
     //holes filled, check if recursion is complete
     if(remaining == 0)
@@ -96,6 +96,9 @@ int** recursiveGeneration(int** previous, int n, int remaining){
         }
     }
 
+    printf("ORDER %d AFTER DELTION STEP 1: \n",n);
+    printArray(previous, len);
+
     //destroying bad vertical blocks
     for(int i=0; i<len; i++){
         for(int j=0; j<len-1; j++){ //doesn't scan rightmost column
@@ -106,38 +109,132 @@ int** recursiveGeneration(int** previous, int n, int remaining){
         }
     }
 
+    printf("ORDER %d AFTER DELETION STEP 2: \n",n);
+    printArray(previous, len);
 
+    //printf("THIS IS THE INITIAL INFLATION ARRAY BEFORE PUTTING THE OLD DOMINOS IN: \n");
+    //printArray(inflated, len+2);
+
+    n++;
+
+
+    printf("POWER GAP POWER GAP POWER GAP \nPOWER GAP POWER GAP POWER GAP \nPOWER GAP POWER GAP POWER GAP \n\n\n");
     //inflation step, inserting old array into new
     for(int i=0; i<len; i++){
         for(int j=0; j<len; j++){
-            inflated[i+1][j+1] = previous[i][j];
+            printf("I'm scanning the element in row %d and col %d of the 'previous' array...\n",i,j);
+
+            if(previous[i][j]!=-1)
+                inflated[i+1][j+1] = previous[i][j];
             //change surrounding tiles of non boundaries to new non-boundaries
             if(previous[i][j]!=-1){ //if inserted diamond isn't at a boundary point
-                if(inflated[i][j+1]==-1) //and inflatd diamond scan point isn't already marked as non-boundary
+                printf("IM IN THE LOOP NOW!\n"); //2,1
+                if(inflated[i][j+1]==-1){ //and inflatd diamond scan point isn't already marked as non-boundary
                     inflated[i][j+1] = 0; //then change the inflated diamond point to empty non-boundary
-                if(inflated[i+1][j+2]==-1)
+                }
+                if(inflated[i+1][j+2]==-1){
                     inflated[i+1][j+2] = 0;
-                if(inflated[i+2][j+1]==-1)
-                    inflated[i+2][j+2] = 0;
-                if(inflated[i+1][j]==-1)
+                }
+                if(inflated[i+2][j+1]==-1){
+                    inflated[i+2][j+1] = 0;
+                }
+                if(inflated[i+1][j]==-1){
                     inflated[i+1][j] = 0;
+                }
+
+
+
+                if(inflated[2][9]==0){
+                    printf("\n\n\n\n\n\ni: %d\nj: %d\n",i,j);
+                    printf("ADSDJJJJJJJJJJJJJJJJJJJJJ\n\n\n\n\n\n\n");
+                }
+
+                printf("this is what the inflated array looks like after the loop!\n");
+                printArray(inflated,len+2);
             }
+
+            printArray(inflated,len+2);
+        }
+    }
+    printf("\n\n\nPOWER GAP POWER GAP POWER GAP \nPOWER GAP POWER GAP POWER GAP \nPOWER GAP POWER GAP POWER GAP \n\n\n");
+
+
+    printf("ORDER %d AFTER INFLATION STEP: \n",n);
+    printArray(inflated, len+2);
+
+
+    //shuffling step (likely inefficient method)
+    //ok this is dank, but 5-8 now represents dominos that have moved once already
+    //since some will be blocked by future moving dominos, multiple iterations are required
+    int done = 0;//bool
+    while(!done){
+        done=1;
+        for(int i=1; i<len+1; i++){
+            for(int j=1; j<len+1; j++){
+                 //moving north up
+                if(inflated[i][j]==1 && (i+j)%2 != n%2 && inflated[i-1][j] == 0 && inflated[i-1][j+1] == 0){ //not sure if last condition is ever required
+                    done=0;
+                    inflated[i-1][j] = 5; inflated[i-1][j+1] = 7;
+                    inflated[i][j]   = 0; inflated[i][j+1]   = 0;
+                }
+
+                //moving east right
+                if(inflated[i][j]==2 && (i+j)%2 == n%2 && inflated[i][j+1] == 0 && inflated[i+1][j+1] == 0){
+                    done=0;
+                    inflated[i][j]   = 0; inflated[i][j+1]   = 6;
+                    inflated[i+1][j] = 0; inflated[i+1][j+1] = 8;
+                }
+
+                //moving south down
+                if(inflated[i][j]==1 && (i+j)%2 == n%2 && inflated[i+1][j] == 0 && inflated[i+1][j+1] == 0){
+                    done=0;
+                    inflated[i][j]   = 0; inflated[i][j+1]   = 0;
+                    inflated[i+1][j] = 5; inflated[i+1][j+1] = 7;
+                }
+
+                //moving west left
+                if(inflated[i][j]==2 && (i+j)%2 != n%2 && inflated[i][j-1] == 0 && inflated[i+1][j-1] == 0){
+                    done=0;
+                    inflated[i][j-1]   = 6; inflated[i][j]   = 0;
+                    inflated[i+1][j-1] = 8; inflated[i+1][j] = 0;
+                }
+            }
+        }
+
+        printf("ORDER %d AFTER A SHUFFLING ITERATION STEP: \n",n);
+        printArray(inflated, len+2);
+    }
+
+    //now finally correcting from 5-8 to 1-4 again
+    for(int i=0; i<len+2; i++){
+        for(int j=0; j<len+2; j++){
+            if(inflated[i][j]!=-1 && inflated[i][j]!=8 && inflated[i][j]!=4)
+                inflated[i][j] = inflated[i][j]%4;
+            else if(inflated[i][j]==8)
+                inflated[i][j] = 4;
         }
     }
 
+    printf("ORDER %d AFTER SHUFFLING COMPLETION: \n",n);
+    printArray(inflated, len+2);
 
-    //shuffling step
 
 
-    return recursiveGeneration(inflated, ++n, --remaining);
+    return recursiveGeneration(inflated, n, --remaining);
 }
 
 
 void printArray(int **input, int size){
     for(int i=0; i<size;i++){
         for(int j=0; j<size;j++){
-            printf("[ %d ]",input[i][j]);
+            if(input[i][j] == -1)
+                printf("[XXX] ");
+            else if(input[i][j] == 0)
+                printf("[   ] ");
+            else
+                printf("[ %d ] ",input[i][j]);
         }
         printf("\n");
     }
+    printf("\n");
 }
