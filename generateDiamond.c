@@ -9,7 +9,7 @@ int** recursiveGeneration(int** previous, int n, int remaining);
 void printArray(int **input, int size);
 char* twitchMessage(int **input, int order);
 
-
+//arguments intended to be (order) or (file order #ofDiamonds)
 int main(int argc, char* argv[]){
     int order;
     if(argc != 2)
@@ -17,7 +17,7 @@ int main(int argc, char* argv[]){
     else
         order=atoi(argv[1])-1;
     if(order < 0){
-        printf("invalid order provided, n >= 1\n");
+        printf("invalid order provided, must be integer between 2 and 8\n");
         return 0;
     }
     srand(time(NULL));
@@ -33,7 +33,7 @@ int main(int argc, char* argv[]){
 
     int** tiling = recursiveGeneration(base, 0, order);
 
-    printArray(tiling, order*2+2);
+    //printArray(tiling, order*2+2);
     
     char result[501];
 
@@ -264,13 +264,13 @@ char* twitchMessage(int **input, int order){
             else if(input[i][j] == -1)
                 strcat(result, "_");
             else if((input[i][j]==1 && ((i+j)%2!=order%2)) || input[i][j]==3 && ((i+j)%2==order%2))
-                strcat(result, "Y");
-            else if((input[i][j]==1 && ((i+j)%2==order%2)) || input[i][j]==3 && ((i+j)%2!=order%2))
                 strcat(result, "B");
+            else if((input[i][j]==1 && ((i+j)%2==order%2)) || input[i][j]==3 && ((i+j)%2!=order%2))
+                strcat(result, "Y");
             else if((input[i][j]==2 && ((i+j)%2!=order%2)) || input[i][j]==4 && ((i+j)%2==order%2))
-                strcat(result, "R");
-            else if((input[i][j]==2 && ((i+j)%2==order%2)) || input[i][j]==4 && ((i+j)%2!=order%2))
                 strcat(result, "G");
+            else if((input[i][j]==2 && ((i+j)%2==order%2)) || input[i][j]==4 && ((i+j)%2!=order%2))
+                strcat(result, "R");
 
 
             if(strlen(result) >= 499)

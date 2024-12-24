@@ -2,8 +2,10 @@ require('dotenv').config();
 const fs = require('fs');
 const tmi = require('tmi.js');
 const fetch = require('node-fetch'); // Ensure you install this with `npm install node-fetch`
+const {exec} = require('child_process');
 const cooldowns = new Map();
 
+let invisRegex = /[\u200B\u200C\u200D\u00A0]/g;
 let messages = [];
 
 const colors = [
@@ -76,21 +78,41 @@ client.on('message', async (channel, tags, message, self) => { // Marked as asyn
   if (message === 'hi') {
     client.say(channel, `MrDestructoid hi ${tags.username}`);
   }
-
+  
   //joining raids
   if(tags.username === `deepdankdungeonbot` && message.includes(`A Raid Event at Level`)){
     setTimeout(() => client.say(channel, `+join`), (2+90*Math.random())*1000);
   }
+  
+  //sending diamonds
+  if (message.startsWith('#diamond') || message.startsWith('Diamond')) {
+    message = message.replace(/\u{e0000}/u, '');
+    const args = message.split(' ');
+        const order = args[1] || 4; // Default order 4 if not specified
 
+        // Compile and execute the C code
+        exec(`gcc -o genDia generateDiamond.c && ./genDia ${order}`, (error, stdout, stderr) => {
+            if (error) {
+                console.error(`Error executing C code: ${stderr}`);
+                client.say(channel, 'Something went wrong with the diamond generator.');
+                return;
+            }
+
+            // Send the output to the Twitch chat
+            const output = stdout.trim();
+            client.say(channel, output.length > 500 ? output.substring(0, 500) + '...' : output);
+        });
+  }
+  
   //sending animation
   if (message.startsWith('#gif ')) {
     const parts = message.split(' ');
     const animationName = parts[1];
-
+    
     //return if "#gif with unnacceptable animation name following"
     if(!animations.includes(animationName))
-      return;
-
+    return;
+    
     try {
       messages = await loadMessages(`${animationName}.txt`);
       
