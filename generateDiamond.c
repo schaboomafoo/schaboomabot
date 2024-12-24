@@ -1,15 +1,27 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
+#include<stdio.h>
+#include<stdlib.h>
+#include<time.h>
+#include<string.h>
 //generally i is row, j is col =/=/= diamond[row][col]
 
 
 int** recursiveGeneration(int** previous, int n, int remaining);
 void printArray(int **input, int size);
+char* twitchMessage(int **input, int order);
 
 
 int main(int argc, char* argv[]){
-    int order=atoi(argv[1]);
+    int order;
+    if(argc != 2)
+        order = 4;
+    else
+        order=atoi(argv[1])-1;
+    if(order < 0){
+        printf("invalid order provided, n >= 1\n");
+        return 0;
+    }
+    srand(time(NULL));
+
 
     int** base = (int**)malloc(2 * sizeof(int*));
     for (int i = 0; i < 2; i++){
@@ -19,14 +31,16 @@ int main(int argc, char* argv[]){
         }
     }
 
-    printArray(base, 2);
-
-    srand(time(NULL));
-
     int** tiling = recursiveGeneration(base, 0, order);
 
     printArray(tiling, order*2+2);
     
+    char result[501];
+
+    //fill string
+    printf("%s\n", twitchMessage(tiling, order));
+
+
     for(int i=0; i<order*2+2; i++){
         free(tiling[i]);
     }
@@ -50,11 +64,6 @@ int** recursiveGeneration(int** previous, int n, int remaining){
     for(int i = 0; i<len; i++){
         for(int j = 0; j<len; j++){
             if(previous[i][j]==0){ //hole has been reached when going from top left to bottom right
-                if(i == len-1 || j == len-1) { // FIXME: remove
-                    printf("\n\n\n\n\n\n\n\n\nBALD RETARDDDDDDDDDDDDDDDDDDDDDD\n");
-                    printArray(previous, len);
-                    printf("\n\n\n\n\n\n");
-                }
                 //coin flip for domino block
                 if(rand()%2){   //two horizontal
                     previous[i][j]   = 1; previous[i][j+1]   = 3;
@@ -68,13 +77,11 @@ int** recursiveGeneration(int** previous, int n, int remaining){
         }
     }
 
-    printf("ORDER %d AFTER INSERTION STEP: \n",n);
-    printArray(previous, len);
-
     //holes filled, check if recursion is complete
     if(remaining == 0) {
         return previous;
     }
+
 
     int** inflated = (int**)malloc((len+2) * sizeof(int*));
     for (int i = 0; i < len+2; i++) {
@@ -84,20 +91,12 @@ int** recursiveGeneration(int** previous, int n, int remaining){
         }
     }
 
-    int** inflatedShuff = (int**)malloc((len+2) * sizeof(int*));
-    for (int i = 0; i < len+2; i++) {
-        inflatedShuff[i] = (int*)malloc((len+2) * sizeof(int));
-        for (int j = 0; j < len+2; j++) {
-            inflatedShuff[i][j] = 0; //full of (empty)
-        }
-    }
-
     //destruction step
     //iterate from top left to bottom right, check each horizontal domino if it's south
     //if it's south, check if the domino directly below it is also horizontal, if so, delete the block
     //(stop this checking at the bottom row since you're done)
 
-    //then do the same shit scanning from top left to bottom right (skipping rightmost col)
+    //then do the same thing, scanning from top left to bottom right (skipping rightmost col)
     //if it's an east domino, check if the domino directly to the right is vertical as well
     //if so, delete it
 
@@ -105,19 +104,11 @@ int** recursiveGeneration(int** previous, int n, int remaining){
     for(int i=0; i<len-1; i++){ //doesn't scan bottom row
         for(int j=0; j<len; j++){
             if(previous[i][j]==1 && previous[i+1][j]==1 && (i+j)%2 != n%2){ //(i+j)%2 != n%2 means SOUTH domino
-                if(j == len-1) { // FIXME: remove
-                    printf("\n\n\n\n\n\n\n\nSHORT RETARDDDDDDDDDDDDDDDDDDDDDD\n");
-                    printArray(previous, len);
-                    printf("\n\n\n\n\n\n");
-                }
                 previous[i][j]   = 0; previous[i][j+1]   = 0;
                 previous[i+1][j] = 0; previous[i+1][j+1] = 0;
             }
         }
     }
-
-    printf("ORDER %d AFTER DELTION STEP 1: \n",n);
-    printArray(previous, len);
 
     //destroying bad vertical blocks
     //check if an east domino has a west domino to the right
@@ -130,58 +121,43 @@ int** recursiveGeneration(int** previous, int n, int remaining){
         }
     }
 
-    printf("ORDER %d AFTER DELETION STEP 2: \n",n);
-    printArray(previous, len);
-
-    //printf("THIS IS THE INITIAL INFLATION ARRAY BEFORE PUTTING THE OLD DOMINOS IN: \n");
-    //printArray(inflated, len+2);
-
     n++;
 
-
-    //printf("POWER GAP POWER GAP POWER GAP \nPOWER GAP POWER GAP POWER GAP \nPOWER GAP POWER GAP POWER GAP \n\n\n");
     //inflation step, inserting old array into new
     for(int i=0; i<len; i++){
         for(int j=0; j<len; j++){
-            //printf("I'm scanning the element in row %d and col %d of the 'previous' array...\n",i,j);
 
-            if(previous[i][j]!=-1)
+            if(previous[i][j]!=-1) //insert previous dominos in middle of new inflation
                 inflated[i+1][j+1] = previous[i][j];
+
             //change surrounding tiles of non boundaries to new non-boundaries
             if(previous[i][j]!=-1){ //if inserted diamond isn't at a boundary point
-                //printf("IM IN THE LOOP NOW!\n"); //2,1
-                if(inflated[i][j+1]==-1){ //and inflatd diamond scan point isn't already marked as non-boundary
+            
+                if(inflated[i][j+1]==-1) //and inflatd diamond scan point isn't already marked as non-boundary
                     inflated[i][j+1] = 0; //then change the inflated diamond point to empty non-boundary
-                    //printf("a zero was placed in inflated at i: %d j: %d\n",i,j+1);
-                }
-                if(inflated[i+1][j+2]==-1){
+                
+                if(inflated[i+1][j+2]==-1)
                     inflated[i+1][j+2] = 0;
-                    //printf("a zero was placed in inflated at i: %d j: %d\n",i+1,j+2);
-                }
-                if(inflated[i+2][j+1]==-1){
+                
+                if(inflated[i+2][j+1]==-1)
                     inflated[i+2][j+1] = 0;
-                    //printf("a zero was placed in inflated at i: %d j: %d\n",i+2,j+1);
-                }
-                if(inflated[i+1][j]==-1){
-                    inflated[i+1][j] = 0;
-                    //printf("a zero was placed in inflated at i: %d j: %d\n",i+1,j);
-                }
-
-                //printf("this is what the inflated array looks like after the loop!\n");
-                //printArray(inflated,len+2);
+                
+                if(inflated[i+1][j]==-1)
+                    inflated[i+1][j] = 0;          
             }
-
-            //printArray(inflated,len+2);
         }
     }
-    //printf("\n\n\nPOWER GAP POWER GAP POWER GAP \nPOWER GAP POWER GAP POWER GAP \nPOWER GAP POWER GAP POWER GAP \n\n\n");
-
-
-    printf("ORDER %d AFTER INFLATION STEP: \n",n);
-    printArray(inflated, len+2);
-
 
     //shuffling step
+
+    int** inflatedShuff = (int**)malloc((len+2) * sizeof(int*));
+    for (int i = 0; i < len+2; i++) {
+        inflatedShuff[i] = (int*)malloc((len+2) * sizeof(int));
+        for (int j = 0; j < len+2; j++) {
+            inflatedShuff[i][j] = 0; //full of (empty)
+        }
+    }
+
     //move dominos into second array temporarily to avoid issues from overlapping dominos
     for(int i=1; i<len+1; i++){
         for(int j=1; j<len+1; j++){
@@ -208,7 +184,7 @@ int** recursiveGeneration(int** previous, int n, int remaining){
             }
         }
     }
-
+    //transferring from shuffled to inflated
     for(int i=0; i<len+2; i++){
         for(int j=0; j<len+2; j++){
             if(inflated[i][j]!=-1)
@@ -216,11 +192,7 @@ int** recursiveGeneration(int** previous, int n, int remaining){
         }
     }
 
-
-    printf("ORDER %d AFTER SHUFFLING COMPLETION: \n",n);
-    printArray(inflated, len+2);
-
-
+    //freeing arrays
     for(int i=0; i<len; i++){
         free(previous[i]);
     }
@@ -244,18 +216,69 @@ void printArray(int **input, int size){
                 printf("[   ] ");
             else
                 printf("[ %d ] ",input[i][j]);
-            /*
-            else if(((input[i][j] == 1 || input[i][j] == 5) && (i+j)%2==0) || ((input[i][j]==3 || input[i][j]==7) && (i+j)%2==1))
-                printf("[ N ] ");
-            else if(((input[i][j] == 1 || input[i][j] == 5) && (i+j)%2==1) || ((input[i][j]==3 || input[i][j]==7) && (i+j)%2==0))
-                printf("[ S ] ");
-            else if(((input[i][j] == 2 || input[i][j] == 6) && (i+j)%2==0) || ((input[i][j]==4 || input[i][j]==8) && (i+j)%2==1))
-                printf("[ W ] ");
-            else if(((input[i][j] == 2 || input[i][j] == 6) && (i+j)%2==1) || ((input[i][j]==4 || input[i][j]==8) && (i+j)%2==0))
-                printf("[ E ] ");
-            */
         }
         printf("\n");
     }
     printf("\n");
+}
+
+//Y north, R west, G east, B south
+char* twitchMessage(int **input, int order){
+    if(order > 7)
+        return("this diamond is too large to display in twitch chat\n");
+    else if(order < 1)
+        return("this diamond is too small to display in twitch chat\n");
+
+    char *result = malloc(501);
+    if (result == NULL) {
+        perror("Failed to allocate memory");
+        exit(EXIT_FAILURE);
+    }
+
+    result[0] = '\0';
+
+    if(order == 1)
+        strcat(result, "_ _ ");
+    else if(order == 2)
+        strcat(result, "_ _ _ ");
+    else if(order == 3)
+        strcat(result, "_ _ _ _ _ ");
+    else if(order == 4)
+        strcat(result, "_ _ _ _ _ _ _ _ ");
+    else if(order == 5)
+        strcat(result, "_ _ _ _ _ _ _ _ _ _ _ ");
+    else if(order == 6)
+        strcat(result, "_ _ _ _ _ _ _ _ _ _ _ _ _ _ ");
+    else //max (true order 8)
+        strcat(result, "_ _ ");
+
+
+
+    int started = 0; //don't start adding to the string until you actually reach the content, since the 'prefix' is fixed for each order
+    for(int i=0; i<order*2+2; i++){
+        for(int j=0; j<order*2+2; j++){
+            if(input[i][j]!=-1)
+                started=1;
+
+            if(!started);
+            else if(input[i][j] == -1)
+                strcat(result, "_");
+            else if((input[i][j]==1 && ((i+j)%2!=order%2)) || input[i][j]==3 && ((i+j)%2==order%2))
+                strcat(result, "Y");
+            else if((input[i][j]==1 && ((i+j)%2==order%2)) || input[i][j]==3 && ((i+j)%2!=order%2))
+                strcat(result, "B");
+            else if((input[i][j]==2 && ((i+j)%2!=order%2)) || input[i][j]==4 && ((i+j)%2==order%2))
+                strcat(result, "R");
+            else if((input[i][j]==2 && ((i+j)%2==order%2)) || input[i][j]==4 && ((i+j)%2!=order%2))
+                strcat(result, "G");
+
+
+            if(strlen(result) >= 499)
+                return result;
+            else if(started)
+                strcat(result, " ");
+        }
+    }
+
+    return result;
 }
