@@ -58,6 +58,10 @@ async function changeColor(color) {
   }
 }
 
+function noSpace(inp){return inp.replace(/\s+/g, '');}
+function noTrigger(inp){return inp.replace(/^%?\s*cookie\s*/, '').trim();}
+
+
 //loading messages for #gif command
 const loadMessages = (fileName) => {
   return new Promise((resolve, reject) => {
@@ -94,82 +98,105 @@ client.on('message', async (channel, tags, message, self) => { // Marked as asyn
     client.say(channel, `MrDestructoid hi ${tags.username}`);
   }
   
-  //joining raids
-  if(tags.username === `deepdankdungeonbot` && (message.includes(`A Raid Event at Level`) || message.includes(`The raid will begin in 90`))){
-    setTimeout(() => client.say(channel, `+join`), (2+60*Math.random())*1000);
+  //donating supibot cookies
+  if(noSpace(message).toLowerCase().startsWith('%cookie')){
+    if (noTrigger(message) === '') {
+      client.say(channel, `$cookie gift ${tags.username}`);
+    } 
+    else {
+      const args = noTrigger(message).split(' ');
+      client.say(channel, `$cookie gift ${args[0]}`);
+    }
   }
-  
-  //sending diamonds
-  if (message.trim().toLowerCase().startsWith('#diamond') || message.startsWith('Diamond')) {
-    message = message.replace(/\u{e0000}/u, '');
-    const args = message.split(' ');
-    const order = args[1] || 4; // Default order 4 if not specified
     
-    // Compile and execute the C code
-    exec(`gcc -o genDia generateDiamond.c && ./genDia ${order}`, (error, stdout, stderr) => {
-      if (error) {
-        console.error(`Error executing C code: ${stderr}`);
-        client.say(channel, 'Something went wrong with the diamond generator.');
+    //joining raids
+    if(tags.username === `deepdankdungeonbot` && (message.includes(`A Raid Event at Level`) || message.includes(`The raid will begin in 90`))){
+      setTimeout(() => client.say(channel, `+join`), (2+60*Math.random())*1000);
+    }
+    
+    //sending diamonds
+    if (message.trim().toLowerCase().startsWith('%diamond') || message.startsWith('Diamond')) {
+      message = message.replace(/\u{e0000}/u, '');
+      const args = message.split(' ');
+      const order = args[1] || 4; // Default order 4 if not specified
+      
+      // Compile and execute the C code
+      exec(`gcc -o genDia generateDiamond.c && ./genDia ${order}`, (error, stdout, stderr) => {
+        if (error) {
+          console.error(`Error executing C code: ${stderr}`);
+          client.say(channel, 'Something went wrong with the diamond generator.');
+          return;
+        }
+        
+        // Send the output to the Twitch chat
+        const output = stdout.trim();
+        client.say(channel, output.length > 500 ? output.substring(0, 500) + '...' : output);
+      });
+    }
+    
+    //sending animations
+    if (noSpace(message).startsWith('%gif')) {
+      //parse gaming parse code
+      let args = message.split('f', 2);
+      if(args.length === 1){
+        client.say(channel, `FeelsDankMan whaht gif? fors or anime?`);
+        return;
+      }
+      //argument was passed
+      args = args[1].split(' ');    
+      
+      
+      const parts = message.split(' ');
+      const animationName = parts[1];
+      
+      //return if "#gif with unnacceptable animation name following"
+      if(!animations.includes(animationName)){
+        client.say(channel, animations+` are the gifs`);
         return;
       }
       
-      // Send the output to the Twitch chat
-      const output = stdout.trim();
-      client.say(channel, output.length > 500 ? output.substring(0, 500) + '...' : output);
-    });
-  }
-  
-  //sending animations
-  if (message.startsWith('#gif ')) {
-    const parts = message.split(' ');
-    const animationName = parts[1];
-    
-    //return if "#gif with unnacceptable animation name following"
-    if(!animations.includes(animationName))
-    return;
-    
-    try {
-      messages = await loadMessages(`${animationName}.txt`);
-      
-      // Send each message with a delay
-      let messageIndex = 0;
-      
-      const sendNextMessage = () => {
-        if (messageIndex < messages.length) {
-          client.say(channel, messages[messageIndex])
-          .then(() => {
-            messageIndex++;
-            setTimeout(sendNextMessage, 75);
-          })
-          .catch(console.error);
-        } else {
-          console.log('All messages sent!');
-        }
-      };
-      
-      sendNextMessage();
-    } catch (error) {
-      console.error('Error:', error);
-      client.say(channel, 'An error occurred while sending messages.');
+      try {
+        messages = await loadMessages(`${animationName}.txt`);
+        
+        // Send each message with a delay
+        let messageIndex = 0;
+        
+        const sendNextMessage = () => {
+          if (messageIndex < messages.length) {
+            client.say(channel, messages[messageIndex])
+            .then(() => {
+              messageIndex++;
+              setTimeout(sendNextMessage, 75);
+            })
+            .catch(console.error);
+          } else {
+            console.log('All messages sent!');
+          }
+        };
+        
+        sendNextMessage();
+      } catch (error) {
+        console.error('Error:', error);
+        client.say(channel, 'An error occurred while sending messages.');
+      }
     }
-  }
+    
+    // Color changing codes
+    const matchedColor = colors.find(color => new RegExp(`\\b${color.toLowerCase()}\\b`).test(message.toLowerCase()));
+    if (matchedColor) {
+      // Change the color via Helix API
+      await changeColor(matchedColor.toLowerCase()); // Use await here
+      client.say(channel, `/me ♪~ ᕕ(ᐛ)ᕗ`);
+    }
+  });
   
-  // Color changing codes
-  const matchedColor = colors.find(color => new RegExp(`\\b${color.toLowerCase()}\\b`).test(message.toLowerCase()));
-  if (matchedColor) {
-    // Change the color via Helix API
-    await changeColor(matchedColor.toLowerCase()); // Use await here
-    client.say(channel, `/me ♪~ ᕕ(ᐛ)ᕗ`);
-  }
-});
-
-client.on('connected', (addr, port) => {
-  console.log(`MrDestructoid Bot connected at ${addr}:${port}`);
-});
-
-
-
-enterDungeon();
-
-// Connect the bot
-client.connect();
+  client.on('connected', (addr, port) => {
+    console.log(`MrDestructoid Bot connected at ${addr}:${port}`);
+  });
+  
+  
+  
+  enterDungeon();
+  
+  // Connect the bot
+  client.connect();
