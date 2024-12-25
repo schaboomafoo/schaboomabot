@@ -1,6 +1,7 @@
 require('dotenv').config();
 const fs = require('fs');
 const tmi = require('tmi.js');
+const si = require('systeminformation');
 const fetch = require('node-fetch'); // Ensure you install this with `npm install node-fetch`
 const {exec} = require('child_process');
 const cooldowns = new Map();
@@ -23,7 +24,7 @@ const opts = {
     username: process.env.TWITCH_USERNAME,
     password: process.env.TWITCH_OAUTH_TOKEN
   },
-  channels: [process.env.TWITCH_CHANNEL]
+  channels: JSON.parse(process.env.TWITCH_CHANNELS)
 };
 
 
@@ -59,7 +60,8 @@ async function changeColor(color) {
 }
 
 function noSpace(inp){return inp.replace(/\s+/g, '');}
-function noTrigger(inp){return inp.replace(/^%?\s*cookie\s*/, '').trim();}
+//no trigger works with single words, like % command (args) will return (args) trimmed
+function noTrigger(inp, t){const tReg = new RegExp(`^%?\\s*${t}\\s*`, 'i');return inp.replace(tReg, '').trim();}
 
 
 //loading messages for #gif command
@@ -82,10 +84,26 @@ function enterDungeon() {
   console.log(`Next dungeon entry in ${(EDinterval / 3.6e+6).toFixed(2)} hours.`);
   
   setTimeout(() => {
-    client.say(process.env.TWITCH_CHANNEL, `+ed`); // Send the "+ed" command
+    client.say('schaboi', `+ed`); // Send the "+ed" command
     enterDungeon(); // Re-schedule itself after the interval
   }, EDinterval);
 }
+
+//Battery checking function
+async function checkBattery() {
+  try {
+    const battery = await si.battery();
+    if (battery.percent <= 15 && !battery.isCharging) {
+      console.log('Battery is low:', battery.percent + '%');
+      // Send a message to the first channel in the bot's list
+      const alertChannel = opts.channels[0];
+      client.say(alertChannel, `MrDestructoid IM DYING HELP IM AT ${battery.percent}% 🪫 PUT THE PLUG IN!`);
+    }
+  } catch (error) {
+    console.error('Error fetching battery information:', error);
+  }
+}
+setInterval(checkBattery, 360 * 1000); // Check every hour
 
 
 
@@ -93,18 +111,43 @@ function enterDungeon() {
 client.on('message', async (channel, tags, message, self) => { // Marked as async
   if (self) return; // Ignore bot's own messages
   
+  //%help (lists commands)
+  
+
   //basic hi response command
   if (message === 'hi') {
     client.say(channel, `MrDestructoid hi ${tags.username}`);
   }
+
+  //checking battery
+  if (noSpace(message.toLowerCase()).startsWith('%battery')) { //very bad
+    const battery = await si.battery();
+
+    let result = '';
+    if(battery.isCharging)
+      result += `I\'m charging `;
+    else 
+      result += `I\'m not charging `;
+    if(battery.percent > 60)
+      result += `🔋 But I'm at a cool ${battery.percent}% FeelsOkayMan`;
+    else if(battery.pencent < 25){
+      if(!battery.isCharging)
+        result = `I\'m not charging 🪫 and I\'m at ${battery.percent}% monkaGIGA it's over`;
+      else  
+        result += `🪫 and I\'m at ${battery.percent}%`;
+    }
+    else
+      result += `and I'm at ${battery.percent}%`;
+    client.say(channel, result);
+  }
   
   //donating supibot cookies
   if(noSpace(message).toLowerCase().startsWith('%cookie')){
-    if (noTrigger(message) === '') {
+    if (noTrigger(message, 'cookie') === '') {
       client.say(channel, `$cookie gift ${tags.username}`);
     } 
     else {
-      const args = noTrigger(message).split(' ');
+      const args = noTrigger(message, 'cookie').split(' ');
       client.say(channel, `$cookie gift ${args[0]}`);
     }
   }
@@ -116,7 +159,7 @@ client.on('message', async (channel, tags, message, self) => { // Marked as asyn
     
     //sending diamonds
     if (message.trim().toLowerCase().startsWith('%diamond') || message.startsWith('Diamond')) {
-      message = message.replace(/\u{e0000}/u, '');
+      message = message.replace(/\u{e0000}/u, ''); //does this do anything? remove ivisible characters, pseudo science
       const args = message.split(' ');
       const order = args[1] || 4; // Default order 4 if not specified
       
@@ -137,21 +180,16 @@ client.on('message', async (channel, tags, message, self) => { // Marked as asyn
     //sending animations
     if (noSpace(message).startsWith('%gif')) {
       //parse gaming parse code
-      let args = message.split('f', 2);
-      if(args.length === 1){
+      if (noTrigger(message, 'gif') === '') {
         client.say(channel, `FeelsDankMan whaht gif? fors or anime?`);
         return;
-      }
-      //argument was passed
-      args = args[1].split(' ');    
-      
-      
-      const parts = message.split(' ');
-      const animationName = parts[1];
+      } 
+      const args = noTrigger(message, 'gif').split(' ');
+      const animationName = args[1];
       
       //return if "#gif with unnacceptable animation name following"
       if(!animations.includes(animationName)){
-        client.say(channel, animations+` are the gifs`);
+        client.say(channel, `[`+animations+`] are the gifs`);
         return;
       }
       
