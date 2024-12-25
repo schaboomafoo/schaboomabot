@@ -93,7 +93,7 @@ function enterDungeon() {
 async function checkBattery() {
   try {
     const battery = await si.battery();
-    if (battery.percent <= 15 && !battery.isCharging) {
+    if (battery.percent <= 15 && !battery.isCharging && battery.hasBattery) {
       console.log('Battery is low:', battery.percent + '%');
       // Send a message to the first channel in the bot's list
       const alertChannel = opts.channels[0];
@@ -122,6 +122,11 @@ client.on('message', async (channel, tags, message, self) => { // Marked as asyn
   //checking battery
   if (noSpace(message.toLowerCase()).startsWith('%battery')) { //very bad
     const battery = await si.battery();
+
+    if(!battery.hasBattery) {
+      client.say(channel, "MrDestructoid I have no battery");
+      return;
+    }
     
     let result = '';
     if(battery.isCharging)
@@ -184,7 +189,7 @@ client.on('message', async (channel, tags, message, self) => { // Marked as asyn
       client.say(channel, `FeelsDankMan whaht gif? fors or anime?`);
       return;
     } 
-    const args = noTrigger(message, 'gif');
+    const animationName = noTrigger(message, 'gif');
     
     //return if "#gif with unnacceptable animation name following"
     if(!animations.includes(animationName)){
