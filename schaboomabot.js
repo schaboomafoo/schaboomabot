@@ -4,7 +4,7 @@ const tmi = require('tmi.js');
 const si = require('systeminformation');
 const fetch = require('node-fetch'); // Ensure you install this with `npm install node-fetch`
 const {exec} = require('child_process');
-const path = require('path'); //for windows / mac support
+const os = require('os'); // To detect the operating system
 const cooldowns = new Map();
 
 let messages = [];
@@ -175,8 +175,8 @@ client.on('message', async (channel, tags, message, self) => { // Marked as asyn
     const order = args[1] || 4; // Default order 4 if not specified
     
     // Compile and execute the C code
-    let exe = path.join('.', 'genDia');
-    exec(`gcc -o genDia generateDiamond.c && ${exe} ${order}`, (error, stdout, stderr) => {
+    const pathExe = os.platform === 'win32' ? '.\\genDia.exe' : './genDia';
+    exec(`gcc -o genDia generateDiamond.c && ${pathExe} ${order}`, (error, stdout, stderr) => {
       if (error) {
         console.error(`Error executing C code: ${stderr}`);
         client.say(channel, 'Something went wrong with the diamond generator.');
