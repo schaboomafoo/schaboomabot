@@ -4,6 +4,7 @@ const tmi = require('tmi.js');
 const si = require('systeminformation');
 const fetch = require('node-fetch'); // Ensure you install this with `npm install node-fetch`
 const {exec} = require('child_process');
+const path = require('path'); //for windows / mac support
 const cooldowns = new Map();
 
 let messages = [];
@@ -33,6 +34,8 @@ const client = new tmi.Client(opts);
 
 
 
+
+
 //Helper function to change color using Helix API
 async function changeColor(color) {
   const url = `https://api.twitch.tv/helix/chat/color?user_id=${process.env.TWITCH_USER_ID}`;
@@ -58,6 +61,7 @@ async function changeColor(color) {
     console.error('Error with color API request:', err);
   }
 }
+
 
 function noSpace(inp){return inp.replace(/\s+/g, '');}
 //no trigger works with single words, like % command (args) will return (args) trimmed
@@ -104,6 +108,8 @@ async function checkBattery() {
   }
 }
 setInterval(checkBattery, 360 * 1000); // Check every hour
+
+
 
 
 
@@ -169,7 +175,8 @@ client.on('message', async (channel, tags, message, self) => { // Marked as asyn
     const order = args[1] || 4; // Default order 4 if not specified
     
     // Compile and execute the C code
-    exec(`gcc -o genDia generateDiamond.c && ./genDia ${order}`, (error, stdout, stderr) => {
+    let exe = path.join('.', 'genDia');
+    exec(`gcc -o genDia generateDiamond.c && ${exe} ${order}`, (error, stdout, stderr) => {
       if (error) {
         console.error(`Error executing C code: ${stderr}`);
         client.say(channel, 'Something went wrong with the diamond generator.');
@@ -231,6 +238,10 @@ client.on('message', async (channel, tags, message, self) => { // Marked as asyn
     client.say(channel, `/me ♪~ ᕕ(ᐛ)ᕗ`);
   }
 });
+
+
+
+
 
 client.on('connected', (addr, port) => {
   console.log(`MrDestructoid Bot connected at ${addr}:${port}`);
