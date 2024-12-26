@@ -263,14 +263,30 @@ char* twitchMessage(int **input, int order){
             if(!started);
             else if(input[i][j] == -1)
                 strcat(result, "_");
-            else if((input[i][j]==1 && ((i+j)%2!=order%2)) || input[i][j]==3 && ((i+j)%2==order%2))
-                strcat(result, "B");
-            else if((input[i][j]==1 && ((i+j)%2==order%2)) || input[i][j]==3 && ((i+j)%2!=order%2))
-                strcat(result, "Y");
-            else if((input[i][j]==2 && ((i+j)%2!=order%2)) || input[i][j]==4 && ((i+j)%2==order%2))
-                strcat(result, "G");
-            else if((input[i][j]==2 && ((i+j)%2==order%2)) || input[i][j]==4 && ((i+j)%2!=order%2))
-                strcat(result, "R");
+            else if((input[i][j]==1 && ((i+j)%2!=order%2)) || input[i][j]==3 && ((i+j)%2==order%2)){ //blue (south)
+                if((i+j)%2==order%2)
+                    strcat(result, "D");
+                else
+                    strcat(result, "S");
+            }
+            else if((input[i][j]==1 && ((i+j)%2==order%2)) || input[i][j]==3 && ((i+j)%2!=order%2)){ //yellow (north)
+                if((i+j)%2==order%2)
+                    strcat(result, "G");
+                else
+                    strcat(result, "H");
+            }
+            else if((input[i][j]==2 && ((i+j)%2!=order%2)) || input[i][j]==4 && ((i+j)%2==order%2)){ //green (east)
+                if((i+j)%2==order%2)
+                    strcat(result, "V");
+                else
+                    strcat(result, "T");
+            }
+            else if((input[i][j]==2 && ((i+j)%2==order%2)) || input[i][j]==4 && ((i+j)%2!=order%2)){ //red (west)
+                if((i+j)%2==order%2)
+                    strcat(result, "R");
+                else
+                    strcat(result, "C");
+            }
 
 
             if(strlen(result) >= 499)

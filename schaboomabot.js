@@ -175,7 +175,7 @@ client.on('message', async (channel, tags, message, self) => { // Marked as asyn
     const order = args[1] || 4; // Default order 4 if not specified
     
     // Compile and execute the C code
-    const pathExe = os.platform == 'win32' ? 'genDia.exe' : './genDia';
+    const pathExe = os.platform() == 'win32' ? 'genDia.exe' : './genDia';
     exec(`gcc -o genDia generateDiamond.c && ${pathExe} ${order}`, (error, stdout, stderr) => {
       if (error) {
         console.error(`Error executing C code: ${stderr}`);
