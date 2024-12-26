@@ -10,9 +10,9 @@ const cooldowns = new Map();
 let messages = [];
 
 const colors = [
-  `Blue`, `BlueViolet`, `CadetBlue`, `Chocolate`, `Coral`, `DodgerBlue`,
-  `Firebrick`, `GoldenRod`, `Green`, `HotPink`, `OrangeRed`, `Red`,
-  `SeaGreen`, `SpringGreen`, `YellowGreen`
+  `Blue`, `Blue_Violet`, `Cadet_Blue`, `Chocolate`, `Coral`, `Dodger_Blue`,
+  `Firebrick`, `Golden_Rod`, `Green`, `Hot_Pink`, `Orange_Red`, `Red`,
+  `Sea_Green`, `Spring_Green`, `Yellow_Green`
 ];
 
 const animations = [
@@ -38,30 +38,27 @@ const client = new tmi.Client(opts);
 
 //Helper function to change color using Helix API
 async function changeColor(color) {
-  const url = `https://api.twitch.tv/helix/chat/color?user_id=${process.env.TWITCH_USER_ID}`;
+  const url = `https://api.twitch.tv/helix/chat/color?user_id=${process.env.TWITCH_USER_ID}&color=${color}`;
   const options = {
     method: 'PUT',
     headers: {
       'Client-ID': process.env.CLIENT_ID,
-      'Authorization': `Bearer ${process.env.ACCESS_TOKEN}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ color })
+      'Authorization': `Bearer ${process.env.TWITCH_OAUTH_TOKEN.replace('oauth:', '')}`
+    }
   };
   
   try {
     const response = await fetch(url, options);
-    if (response.status === 204) {
+    if (response.ok) {
       console.log(`Color successfully changed to: ${color}`);
     } else {
-      const error = await response.json();
-      console.error('Error changing color:', error);
+      const errorDetails = await response.json();
+      console.error('Error changing color:', errorDetails);
     }
   } catch (err) {
-    console.error('Error with color API request:', err);
+    console.error('Network error while changing color:', err);
   }
 }
-
 
 function noSpace(inp){return inp.replace(/\s+/g, '');}
 //no trigger works with single words, like % command (args) will return (args) trimmed
@@ -128,7 +125,7 @@ client.on('message', async (channel, tags, message, self) => { // Marked as asyn
   //checking battery
   if (noSpace(message.toLowerCase()).startsWith('%battery')) { //very bad
     const battery = await si.battery();
-
+    
     if(!battery.hasBattery) {
       client.say(channel, "MrDestructoid I have no battery");
       return;
@@ -136,14 +133,14 @@ client.on('message', async (channel, tags, message, self) => { // Marked as asyn
     
     let result = '';
     if(battery.isCharging)
-      result += `I\'m charging `;
+    result += `I\'m charging `;
     else 
     result += `I\'m not charging `;
     if(battery.percent > 60)
-      result += `🔋 But I'm at a cool ${battery.percent}% FeelsOkayMan`;
-    else if(battery.pencent < 25){
+    result += `🔋 But I'm at a cool ${battery.percent}% FeelsOkayMan`;
+    else if(battery.percent < 25){
       if(!battery.isCharging)
-        result = `I\'m not charging 🪫 and I\'m at ${battery.percent}% monkaGIGA it's over`;
+      result = `I\'m not charging 🪫 and I\'m at ${battery.percent}% monkaGIGA it's over`;
       else  
       result += `🪫 and I\'m at ${battery.percent}%`;
     }
@@ -234,8 +231,15 @@ client.on('message', async (channel, tags, message, self) => { // Marked as asyn
   const matchedColor = colors.find(color => new RegExp(`\\b${color.toLowerCase()}\\b`).test(message.toLowerCase()));
   if (matchedColor) {
     // Change the color via Helix API
-    await changeColor(matchedColor.toLowerCase()); // Use await here
+    await changeColor(matchedColor.toLowerCase());
+    await new Promise(resolve => setTimeout(resolve, 1000)); //let it cook
     client.say(channel, `/me ♪~ ᕕ(ᐛ)ᕗ`);
+  }
+
+  //just fake function to show available colors /██
+  if (noSpace(message).toLowerCase().startsWith('%color')){
+    if(noTrigger(message, 'color') == '' || !matchedColor)
+      client.say(channel, '🖍️ available colors are ['+colors+']');
   }
 });
 

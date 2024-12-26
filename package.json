@@ -11,6 +11,7 @@
   "description": "",
   "dependencies": {
     "dotenv": "^16.4.7",
+    "path": "^0.12.7",
     "systeminformation": "^5.23.23",
     "tmi.js": "^1.8.5"
   }
