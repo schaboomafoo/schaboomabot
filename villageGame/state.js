@@ -1,34 +1,34 @@
 const deathState = {
     alive: false,
-    village_level: 0, //used to calculate enemy damage
+    villageLevel: 0, //used to calculate enemy damage
     hp: 0,
     villagers: [],
     resources: 0,
     runTime: 0,
-    start_time: null,
-    current_Enemies: ""
+    startTime: null,
+    currentEnemies: ""
 };
 
 const startState = {
     alive: true,
-    village_level: 1,
+    villageLevel: 1,
     hp: 1000,
     villagers: [],
     resources: 0,
     runTime: 0,
-    start_time: null,
-    current_Enemies: ""
+    startTime: null,
+    currentEnemies: ""
 };
 
 let villageState = {
     alive: false,
-    village_level: 0,
+    villageLevel: 0,
     hp: 0,
     villagers: [],
     resources: 0,
     runTime: 0,
-    start_time: null,
-    current_Enemies: ""
+    startTime: null,
+    currentEnemies: ""
 };
 
 
