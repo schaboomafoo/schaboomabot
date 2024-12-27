@@ -14,7 +14,7 @@ const startState = {
     resources: 0,
     runTime: 0,
     currentEnemy: ""
-}
+};
 
 let villageState = {
     alive: false,

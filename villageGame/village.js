@@ -34,8 +34,14 @@ const handleVillage = async(client, channel, tags, message) => {
 
 
         case 'summon':
-            client.say(channel, "summon arg");
-            spawnEnemy('zombie');
+            if(!villageState.alive){
+                client.say(channel, 'the village isn\'t started');
+            }
+            else{
+                client.say(channel, "summon arg");
+                spawnEnemy('zombie');
+            }
+            
             break;
 
 
@@ -56,3 +62,11 @@ const handleVillage = async(client, channel, tags, message) => {
 }
 
 module.exports = { handleVillage };
+
+//make village instance restricted to channel
+//make village state write and read from file
+//add ticks of damage to the village
+
+//damage 15 min ticks
+
+//spawns random 1-3 hours
