@@ -70,3 +70,5 @@ module.exports = { handleVillage };
 //damage 15 min ticks
 
 //spawns random 1-3 hours
+//time elapsed will just be calculated with a starting timestamp
+//then every tick someone checks time passed it will just check time since initial passed
