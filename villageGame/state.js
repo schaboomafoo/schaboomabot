@@ -3,7 +3,8 @@ const deathState = {
     hp: 0,
     villagers: [],
     resources: 0,
-    runTime: 0
+    runTime: 0,
+    currentEnemy: ""
 };
 
 const startState = {
@@ -11,7 +12,8 @@ const startState = {
     hp: 1000,
     villagers: [],
     resources: 0,
-    runTime: 0
+    runTime: 0,
+    currentEnemy: ""
 }
 
 let villageState = {
@@ -19,7 +21,8 @@ let villageState = {
     hp: 0,
     villagers: [],
     resources: 0,
-    runTime: 0
+    runTime: 0,
+    currentEnemy: ""
 };
 
 
@@ -28,14 +31,20 @@ function killVillage() {
     Object.assign(villageState, { ...deathState });
 }
 
-function startVillage() {
+function startVillage(user) {
     Object.assign(villageState, { ...startState });
+    villageState.villagers = [user]; //add starting user to village
 }
 
+function spawnEnemy(enemy){
+    enemy = 'zombie';
+    villageState.currentEnemy = 'zombie';
+}
 
 
 module.exports = {
     villageState,
     killVillage,
-    startVillage
+    startVillage,
+    spawnEnemy
 };

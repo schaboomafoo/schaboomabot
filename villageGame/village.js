@@ -1,5 +1,11 @@
 const { noTrigger, noSpaceCase } = require('../sharedUtils');
-const { villageState, killVillage, startVillage } = require('./state');
+const { villageState, killVillage, startVillage, spawnEnemy } = require('./state');
+
+const mobs = [
+    'skeleton', 
+    'zombie', 
+    'bird'   
+];
 
 const handleVillage = async(client, channel, tags, message) => {
     let command = noTrigger(message, 'village');
@@ -8,13 +14,13 @@ const handleVillage = async(client, channel, tags, message) => {
 
     if(command == `amongus`)
         client.say(channel, `amongus response this is the cmomand: `+command);
-        
+
 
     switch (command) {
         case 'start':
             if(!villageState.alive){
                 client.say(channel, '🏚️ The village has started, gather resources 🪵 🪨 🐟 or get ready for invasions  ⚔️🧟💀🧙  ')
-                startVillage();
+                startVillage(tags.username);
             }
             else
                 client.say(channel, '🏘️ the village has already started');
@@ -22,8 +28,16 @@ const handleVillage = async(client, channel, tags, message) => {
 
 
         case 'debug':
-            client.say(channel, 'alive: '+villageState.alive+' hp: '+villageState.hp+' villagers: '+villageState.villagers+' resources: '+villageState.resources+' runTime: '+villageState.runTime);
+            client.say(channel, 'alive: '+villageState.alive+' hp: '+villageState.hp+' villagers: '+villageState.villagers+' resources: '+villageState.resources+' runTime: '+villageState.runTime+' current enemy: '+villageState.currentEnemy);
+            client.say(channel, `${mobs}`);
             break;
+
+
+        case 'summon':
+            client.say(channel, "summon arg");
+            spawnEnemy('zombie');
+            break;
+
 
         case 'meteor':
             if(!villageState.alive){

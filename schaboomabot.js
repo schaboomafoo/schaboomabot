@@ -119,8 +119,17 @@ setInterval(checkBattery, 360 * 1000); // Check every hour
 client.on('message', async (channel, tags, message, self) => { // Marked as async
   if (self) return; // Ignore bot's own messages
   
-  //%help (lists commands)
-  
+  //%help (link to about / commands or something? list of commands with real descriptions like arguments and functionality)
+
+  //%commands
+  if(noSpaceCase(message).startsWith('%commands')){
+    client.say(channel, 'The current bot commands are %:channels, battery, cookie, diamond, gif, village, color');
+  }
+
+  //%channels
+  if(noSpaceCase(message).startsWith('%channels')){
+    client.say(channel, `This bot is currently active in the following channels: ${opts.channels}`)
+  }
   
   //basic hi response command
   if (message === 'hi') {client.say(channel, `MrDestructoid hi ${tags.username}`);}
@@ -167,7 +176,7 @@ client.on('message', async (channel, tags, message, self) => { // Marked as asyn
   if(tags.username === `deepdankdungeonbot` && (message.includes(`A Raid Event at Level`) || message.includes(`The raid will begin in 90`))){setTimeout(() => client.say(channel, `+join`), (2+60*Math.random())*1000);}
   
   //sending diamonds
-  if (noSpaceCase(message).startsWith('%diamond') || noSpaceCase(message).startsWith('Diamond')) {
+  if (noSpaceCase(message).startsWith('%diamond') || noSpaceCase(message).startsWith('diamond')) {
     message = message.replace(/\u{e0000}/u, ''); //does this do anything? remove ivisible characters, pseudo science
     const args = message.split(' ');
     const order = args[1] || 4; // Default order 4 if not specified
