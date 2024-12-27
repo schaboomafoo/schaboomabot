@@ -1,27 +1,42 @@
-const { notrigger, noSpaceCase } = require('../sharedUtils');
-const { villageState } = require('./state');
+const { noTrigger, noSpaceCase } = require('../sharedUtils');
+const { villageState, killVillage, startVillage } = require('./state');
 
 const handleVillage = async(client, channel, tags, message) => {
-    const tReg1 = new RegExp(`^%?\\s*village\\s*`, 'i');
-    const tReg2 = new RegExp(`^%?\\s*v\\s*`, 'i');
+    let command = noTrigger(message, 'village');
+    command = noTrigger(noSpaceCase(command), 'v');
+    //client.say(channel, 'no trigger: '+command);
 
-    const otherString = noSpaceCase(message);
-
-    client.say(channel, otherString);
-
-    let command = message.replace(tReg1, '').trim();
-    command = command.replace(tReg2, '').trim();
-
-    if(command == `amnogus`)
+    if(command == `amongus`)
         client.say(channel, `amongus response this is the cmomand: `+command);
         
 
     switch (command) {
         case 'start':
-            client.say(channel, '🏚️ The village has started, ')
+            if(!villageState.alive){
+                client.say(channel, '🏚️ The village has started, gather resources 🪵 🪨 🐟 or get ready for invasions  ⚔️🧟💀🧙  ')
+                startVillage();
+            }
+            else
+                client.say(channel, '🏘️ the village has already started');
+            break;
 
 
+        case 'debug':
+            client.say(channel, 'alive: '+villageState.alive+' hp: '+villageState.hp+' villagers: '+villageState.villagers+' resources: '+villageState.resources+' runTime: '+villageState.runTime);
+            break;
 
+        case 'meteor':
+            if(!villageState.alive){
+                client.say(channel, 'the village isn\'t started');
+            }
+            else if(tags.username == 'schaboi' || tags.username == 'ranbaclownc '){
+                client.say(channel, '🏘️☄️ a meteor has crashed into and destroyed the village 😔 better luck next time')
+                killVillage();
+            }
+            else{
+                client.say(channel, `you can\'t send meteors ${tags.username} noob ass`);
+            }
+            break;
 
     }
 }
