@@ -5,6 +5,12 @@ const si = require('systeminformation');
 const fetch = require('node-fetch'); // Ensure you install this with `npm install node-fetch`
 const {exec} = require('child_process');
 const os = require('os'); // To detect the operating system
+
+//village consts from elsewhere
+const { handleVillage } = require('./villageGame/village');
+const { noTrigger, noSpaceCase } = require('./sharedUtils');
+
+
 const cooldowns = new Map();
 
 let messages = [];
@@ -14,6 +20,7 @@ const colors = [
   `Firebrick`, `Golden_Rod`, `Green`, `Hot_Pink`, `Orange_Red`, `Red`,
   `Sea_Green`, `Spring_Green`, `Yellow_Green`
 ];
+const colorAliases = {pink: 'Hot_Pink', dodger: 'Dodger_Blue', fire: 'Firebrick', brick: 'Firebrick', gold: 'Golden_Rod', sea: 'Sea_Green', spring: 'Spring_Green', yellow: 'Yellow_Green'};
 
 const animations = [
   `anime`, `fors`
@@ -60,9 +67,7 @@ async function changeColor(color) {
   }
 }
 
-function noSpace(inp){return inp.replace(/\s+/g, '');}
-//no trigger works with single words, like % command (args) will return (args) trimmed
-function noTrigger(inp, t){const tReg = new RegExp(`^%?\\s*${t}\\s*`, 'i');return inp.replace(tReg, '').trim();}
+
 
 
 //loading messages for #gif command
@@ -118,12 +123,10 @@ client.on('message', async (channel, tags, message, self) => { // Marked as asyn
   
   
   //basic hi response command
-  if (message === 'hi') {
-    client.say(channel, `MrDestructoid hi ${tags.username}`);
-  }
+  if (message === 'hi') {client.say(channel, `MrDestructoid hi ${tags.username}`);}
   
   //checking battery
-  if (noSpace(message.toLowerCase()).startsWith('%battery')) { //very bad
+  if (noSpaceCase(message.toLowerCase()).startsWith('%battery')) { //very bad
     const battery = await si.battery();
     
     if(!battery.hasBattery) {
@@ -133,14 +136,14 @@ client.on('message', async (channel, tags, message, self) => { // Marked as asyn
     
     let result = '';
     if(battery.isCharging)
-    result += `I\'m charging `;
+      result += `I\'m charging `;
     else 
     result += `I\'m not charging `;
     if(battery.percent > 60)
-    result += `🔋 But I'm at a cool ${battery.percent}% FeelsOkayMan`;
+      result += `🔋 But I'm at a cool ${battery.percent}% FeelsOkayMan`;
     else if(battery.percent < 25){
       if(!battery.isCharging)
-      result = `I\'m not charging 🪫 and I\'m at ${battery.percent}% monkaGIGA it's over`;
+        result = `I\'m not charging 🪫 and I\'m at ${battery.percent}% monkaGIGA it's over`;
       else  
       result += `🪫 and I\'m at ${battery.percent}%`;
     }
@@ -150,7 +153,7 @@ client.on('message', async (channel, tags, message, self) => { // Marked as asyn
   }
   
   //donating supibot cookies
-  if(noSpace(message).toLowerCase().startsWith('%cookie')){
+  if(noSpaceCase(message).startsWith('%cookie')){
     if (noTrigger(message, 'cookie') === '') {
       client.say(channel, `$cookie gift ${tags.username}`);
     } 
@@ -161,12 +164,10 @@ client.on('message', async (channel, tags, message, self) => { // Marked as asyn
   }
   
   //joining raids
-  if(tags.username === `deepdankdungeonbot` && (message.includes(`A Raid Event at Level`) || message.includes(`The raid will begin in 90`))){
-    setTimeout(() => client.say(channel, `+join`), (2+60*Math.random())*1000);
-  }
+  if(tags.username === `deepdankdungeonbot` && (message.includes(`A Raid Event at Level`) || message.includes(`The raid will begin in 90`))){setTimeout(() => client.say(channel, `+join`), (2+60*Math.random())*1000);}
   
   //sending diamonds
-  if (message.trim().toLowerCase().startsWith('%diamond') || message.startsWith('Diamond')) {
+  if (noSpaceCase(message).startsWith('%diamond') || noSpaceCase(message).startsWith('Diamond')) {
     message = message.replace(/\u{e0000}/u, ''); //does this do anything? remove ivisible characters, pseudo science
     const args = message.split(' ');
     const order = args[1] || 4; // Default order 4 if not specified
@@ -187,7 +188,7 @@ client.on('message', async (channel, tags, message, self) => { // Marked as asyn
   }
   
   //sending animations
-  if (noSpace(message).startsWith('%gif')) {
+  if (noSpaceCase(message).startsWith('%gif')) {
     //parse gaming parse code
     if (noTrigger(message, 'gif') === '') {
       client.say(channel, `FeelsDankMan whaht gif? fors or anime?`);
@@ -226,18 +227,28 @@ client.on('message', async (channel, tags, message, self) => { // Marked as asyn
       client.say(channel, 'An error occurred while sending messages.');
     }
   }
+
+  //%village and %v related commands
+  if(noSpaceCase(message).startsWith('%village') || noSpaceCase(message).startsWith('%v')){
+    await handleVillage(client, channel, tags, message);
+  }
   
   // Color changing codes
-  const matchedColor = colors.find(color => new RegExp(`\\b${color.toLowerCase()}\\b`).test(message.toLowerCase()));
+  const matchedColor = colors.find(color => 
+    new RegExp(`\\b${color.toLowerCase()}\\b`).test(message.toLowerCase())
+  ) || Object.keys(colorAliases).find(alias => 
+    new RegExp(`\\b${alias}\\b`).test(message.toLowerCase())
+  );
   if (matchedColor) {
     // Change the color via Helix API
-    await changeColor(matchedColor.toLowerCase());
+    const colorToChange = colorAliases[matchedColor] || matchedColor;
+    await changeColor(colorToChange.toLowerCase());
     await new Promise(resolve => setTimeout(resolve, 1000)); //let it cook
     client.say(channel, `/me ♪~ ᕕ(ᐛ)ᕗ`);
   }
-
+  
   //just fake function to show available colors /██
-  if (noSpace(message).toLowerCase().startsWith('%color')){
+  if (noSpaceCase(message).toLowerCase().startsWith('%color')){
     if(noTrigger(message, 'color') == '' || !matchedColor)
       client.say(channel, '🖍️ available colors are ['+colors+']');
   }
