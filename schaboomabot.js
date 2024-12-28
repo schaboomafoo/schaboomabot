@@ -8,8 +8,9 @@ const os = require('os'); // To detect the operating system
 
 //village consts from elsewhere
 const { handleVillage, spawnRandomEnemy, applyDamage } = require('./villageGame/village');
+const { startVillage, villages } = require('./villageGame/state');
 const { noTrigger, noSpaceCase } = require('./sharedUtils');
-const villages = {};
+
 
 
 const cooldowns = new Map();
@@ -68,32 +69,16 @@ async function changeColor(color) {
   }
 }
 
-
-//village helper functions and timers
-function startVillage(channel, username) {
-  if (!villages[channel]) {
-    villages[channel] = {
-      hp: 1000,
-      alive: true,
-      currentEnemies: []
-    };
-    console.log(`Village started in channel ${channel}`);
-    //return "🏚️ The village has started, gather resources 🪵 🪨 🐟 or get ready for invasions  ⚔️🧟💀🧙 ";
-  }
-  //else  
-    //return `🏘️ The village has already started, ${username}.`;
-}
-
 // Randomly spawn enemies (1-3 hours)
 function scheduleEnemySpawn() {
   setInterval(() => {
     for (const channel in villages) {
       const village = villages[channel];
       if (village.alive) {
-        spawnRandomEnemy(channel, village);
+        spawnRandomEnemy(client, channel, village);
       }
     }
-  }, (1 + 2 * Math.random()) * 10 * 1000); // Random interval (1 + 2 * Math.random()) * 60 * 60 * 1000)
+  }, (1 + 2 * Math.random()) * 60 * 60 * 1000); // Random interval (1 + 2 * Math.random()) * 60 * 60 * 1000)
 }
 
 // Apply damage every 15 minutes
@@ -101,14 +86,12 @@ function scheduleDamageCalculation() {
   setInterval(() => {
     for (const channel in villages) {
       const village = villages[channel];
-      if (village.alive) {
-        applyDamage(channel, village);
+      if (village.alive && village.currentEnemies.length > 0) {
+        applyDamage(client, channel, village);
       }
     }
-  }, 5 * 1000); // 15-minute intervals 15 * 60 * 1000
+  }, 15 * 60 * 1000); // 15-minute intervals 15 * 60 * 1000
 }
-
-
 
 
 //loading messages for #gif command
@@ -280,13 +263,6 @@ client.on('message', async (channel, tags, message, self) => { // Marked as asyn
   
   //%village and %v related commands
   if(noSpaceCase(message).startsWith('%village') || noSpaceCase(message).startsWith('%v')){
-    let command = noTrigger(message, 'village');
-    command = noTrigger(noSpaceCase(command), 'v');
-    //start village here
-    if(command == 'start')
-    startVillage(channel);
-    
-    
     await handleVillage(client, channel, tags, message);
   }
   

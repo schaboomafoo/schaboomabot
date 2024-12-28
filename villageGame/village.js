@@ -24,17 +24,18 @@ const enemies = [
     { type: '👹', dps: 35 }
 ];
 
+
 //spawn enemy
-function spawnRandomEnemy(channel, villageState) {
+function spawnRandomEnemy(client, channel, villageState) {
     const enemy = enemies[Math.floor(Math.random() * enemies.length)];
     villageState.currentEnemies.push(enemy.type);
     console.log(`Spawned enemy ${enemy.type} in channel ${channel}`);
-    client.say(`Spawned enemy ${enemy.type} in channel ${channel}`);
+    client.say(channel, `An enemy ${enemy.type} has spawned and is now attacking the village!`);
 
 }
 
 // Calculate and apply damage to the village
-function applyDamage(channel, villageState) {
+function applyDamage(client, channel, villageState) {
     let totalDPS = 0;
     villageState.currentEnemies.forEach(enemyType => {
         const enemy = enemies.find(e => e.type === enemyType);
@@ -43,10 +44,11 @@ function applyDamage(channel, villageState) {
 
     villageState.hp -= totalDPS;
     console.log(`Channel ${channel}: ${totalDPS} damage applied. Remaining HP: ${villageState.hp}`);
-    client.say(channel, console.log(`Channel ${channel}: ${totalDPS} damage applied. Remaining HP: ${villageState.hp}`));
+    client.say(channel, `${villageState.currentEnemies} are attacking the village!`);
+    client.say(channel, `${totalDPS} damage applied. Remaining HP: ${villageState.hp}`);
 
     if (villageState.hp <= 0) {
-        villageState.alive = false;
+        killVillage(channel);
         console.log(`Channel ${channel}'s village has been destroyed!`);
         client.say(channel, "🔥🏚️ ☠️ your village has been destroyed entirely, beyond repair");
     }
@@ -106,6 +108,8 @@ const handleVillage = async(client, channel, tags, message) => {
         case 'kill': 
         case 'attack':
         case 'defend':
+            if(!villageState.villagers.includes(tags.username))
+                addVillager(channel, tags.username);
             if(!villageState.alive)
                 client.say(channel, 'the village isn\'t started');
             else

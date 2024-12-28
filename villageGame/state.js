@@ -87,6 +87,7 @@ function getTotalAliveTime(channel) {
 }
 
 module.exports = {
+    villages,
     getVillageState,
     killVillage,
     startVillage,
