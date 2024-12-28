@@ -1,16 +1,63 @@
 const { noTrigger, noSpaceCase } = require('../sharedUtils');
-const { villageState, killVillage, startVillage, spawnEnemy } = require('./state');
+const { getVillageState,killVillage,startVillage,spawnEnemy,getTotalAliveTime,killEnemy,updateResources,damageVillage,addVillager} = require('./state');
 
-const mobs = [
-    'skeleton', 
-    'zombie', 
-    'bird'   
+/*
+const startState = {
+    alive: true,
+    villageLevel: 1,
+    hp: 1000,
+    villagers: [],
+    resources: 0,
+    runTime: 0,
+    startTime: null,
+    currentEnemies: []
+};
+*/
+
+const enemies = [
+    { type: '💀', dps: 10 },
+    { type: '🧟', dps: 12 },
+    { type: '🧌', dps: 15 },
+    { type: '👻', dps: 20 },
+    { type: '👽', dps: 25 },
+    { type: '🤖', dps: 30 },
+    { type: '👹', dps: 35 }
 ];
+
+//spawn enemy
+function spawnRandomEnemy(channel, villageState) {
+    const enemy = enemies[Math.floor(Math.random() * enemies.length)];
+    villageState.currentEnemies.push(enemy.type);
+    console.log(`Spawned enemy ${enemy.type} in channel ${channel}`);
+    client.say(`Spawned enemy ${enemy.type} in channel ${channel}`);
+
+}
+
+// Calculate and apply damage to the village
+function applyDamage(channel, villageState) {
+    let totalDPS = 0;
+    villageState.currentEnemies.forEach(enemyType => {
+        const enemy = enemies.find(e => e.type === enemyType);
+        if (enemy) totalDPS += enemy.dps;
+    });
+
+    villageState.hp -= totalDPS;
+    console.log(`Channel ${channel}: ${totalDPS} damage applied. Remaining HP: ${villageState.hp}`);
+    client.say(channel, console.log(`Channel ${channel}: ${totalDPS} damage applied. Remaining HP: ${villageState.hp}`));
+
+    if (villageState.hp <= 0) {
+        villageState.alive = false;
+        console.log(`Channel ${channel}'s village has been destroyed!`);
+        client.say(channel, "🔥🏚️ ☠️ your village has been destroyed entirely, beyond repair");
+    }
+}
 
 const handleVillage = async(client, channel, tags, message) => {
     let command = noTrigger(message, 'village');
     command = noTrigger(noSpaceCase(command), 'v');
     //client.say(channel, 'no trigger: '+command);
+
+    const villageState = getVillageState(channel);
 
     if(command == `amongus`)
         client.say(channel, `amongus response this is the cmomand: `+command);
@@ -19,29 +66,50 @@ const handleVillage = async(client, channel, tags, message) => {
     switch (command) {
         case 'start':
             if(!villageState.alive){
-                client.say(channel, '🏚️ The village has started, gather resources 🪵 🪨 🐟 or get ready for invasions  ⚔️🧟💀🧙  ')
-                startVillage(tags.username);
+                const message = startVillage(channel, tags.username);
+                client.say(channel, "🏚️ The village has started, gather resources 🪵 🪨 🐟 or get ready for invasions  ⚔️🧟💀🧙 ");
             }
             else
                 client.say(channel, '🏘️ the village has already started');
             break;
 
+        case 'join':
+            if(!villageState.villagers.includes(tags.username)){
+                client.say(channel, `🏕️ welcome to the village ${tags.username}`)
+                addVillager(channel, tags.username);
+            }
+            else
+                client.say(channel, `you are already in the village ${tags.username}`);
+            break;
 
         case 'debug':
-            client.say(channel, 'alive: '+villageState.alive+' hp: '+villageState.hp+' villagers: '+villageState.villagers+' resources: '+villageState.resources+' runTime: '+villageState.runTime+' current enemy: '+villageState.currentEnemy);
-            client.say(channel, `${mobs}`);
+            client.say(channel, 
+                `alive: ${villageState.alive} | ` +
+                `level: ${villageState.villageLevel} | ` +
+                `hp: ${villageState.hp} | ` +
+                `villagers: ${villageState.villagers} | ` +
+                `resources: ${villageState.resources} | ` +
+                `current enemies: ${villageState.currentEnemies}`
+            );
             break;
 
 
         case 'summon':
-            if(!villageState.alive){
+            if (!villageState.alive) {
+                client.say(channel, "The village isn't started yet.");
+            } else {
+                spawnEnemy(channel, '🧟');
+                client.say(channel, "🧟 A zombie has appeared!");
+            }
+            break;
+
+        case 'kill': 
+        case 'attack':
+        case 'defend':
+            if(!villageState.alive)
                 client.say(channel, 'the village isn\'t started');
-            }
-            else{
-                client.say(channel, "summon arg");
-                spawnEnemy('zombie');
-            }
-            
+            else
+                client.say(channel, killEnemy(channel));
             break;
 
 
@@ -49,19 +117,23 @@ const handleVillage = async(client, channel, tags, message) => {
             if(!villageState.alive){
                 client.say(channel, 'the village isn\'t started');
             }
-            else if(tags.username == 'schaboi' || tags.username == 'ranbaclownc '){
+            else if(tags.username == 'schaboi' || tags.username == 'ranbaclownc'){
                 client.say(channel, '🏘️☄️ a meteor has crashed into and destroyed the village 😔 better luck next time')
-                killVillage();
+                killVillage(channel);
             }
             else{
                 client.say(channel, `you can\'t send meteors ${tags.username} noob ass`);
             }
             break;
 
+
+            default:
+                //client.say(channel, "Unknown village command");
+                break;
     }
 }
 
-module.exports = { handleVillage };
+module.exports = { handleVillage, spawnRandomEnemy, applyDamage };
 
 //make village instance restricted to channel
 //make village state write and read from file

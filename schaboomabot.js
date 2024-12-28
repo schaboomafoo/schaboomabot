@@ -7,8 +7,9 @@ const {exec} = require('child_process');
 const os = require('os'); // To detect the operating system
 
 //village consts from elsewhere
-const { handleVillage } = require('./villageGame/village');
+const { handleVillage, spawnRandomEnemy, applyDamage } = require('./villageGame/village');
 const { noTrigger, noSpaceCase } = require('./sharedUtils');
+const villages = {};
 
 
 const cooldowns = new Map();
@@ -68,6 +69,46 @@ async function changeColor(color) {
 }
 
 
+//village helper functions and timers
+function startVillage(channel, username) {
+  if (!villages[channel]) {
+    villages[channel] = {
+      hp: 1000,
+      alive: true,
+      currentEnemies: []
+    };
+    console.log(`Village started in channel ${channel}`);
+    //return "🏚️ The village has started, gather resources 🪵 🪨 🐟 or get ready for invasions  ⚔️🧟💀🧙 ";
+  }
+  //else  
+    //return `🏘️ The village has already started, ${username}.`;
+}
+
+// Randomly spawn enemies (1-3 hours)
+function scheduleEnemySpawn() {
+  setInterval(() => {
+    for (const channel in villages) {
+      const village = villages[channel];
+      if (village.alive) {
+        spawnRandomEnemy(channel, village);
+      }
+    }
+  }, (1 + 2 * Math.random()) * 10 * 1000); // Random interval (1 + 2 * Math.random()) * 60 * 60 * 1000)
+}
+
+// Apply damage every 15 minutes
+function scheduleDamageCalculation() {
+  setInterval(() => {
+    for (const channel in villages) {
+      const village = villages[channel];
+      if (village.alive) {
+        applyDamage(channel, village);
+      }
+    }
+  }, 5 * 1000); // 15-minute intervals 15 * 60 * 1000
+}
+
+
 
 
 //loading messages for #gif command
@@ -120,12 +161,12 @@ client.on('message', async (channel, tags, message, self) => { // Marked as asyn
   if (self) return; // Ignore bot's own messages
   
   //%help (link to about / commands or something? list of commands with real descriptions like arguments and functionality)
-
+  
   //%commands
   if(noSpaceCase(message).startsWith('%commands')){
     client.say(channel, 'The current bot commands are %:channels, battery, cookie, diamond, gif, village, color');
   }
-
+  
   //%channels
   if(noSpaceCase(message).startsWith('%channels')){
     client.say(channel, `This bot is currently active in the following channels: ${opts.channels}`)
@@ -145,14 +186,14 @@ client.on('message', async (channel, tags, message, self) => { // Marked as asyn
     
     let result = '';
     if(battery.isCharging)
-      result += `I\'m charging `;
+    result += `I\'m charging `;
     else 
     result += `I\'m not charging `;
     if(battery.percent > 60)
-      result += `🔋 But I'm at a cool ${battery.percent}% FeelsOkayMan`;
+    result += `🔋 But I'm at a cool ${battery.percent}% FeelsOkayMan`;
     else if(battery.percent < 25){
       if(!battery.isCharging)
-        result = `I\'m not charging 🪫 and I\'m at ${battery.percent}% monkaGIGA it's over`;
+      result = `I\'m not charging 🪫 and I\'m at ${battery.percent}% monkaGIGA it's over`;
       else  
       result += `🪫 and I\'m at ${battery.percent}%`;
     }
@@ -236,44 +277,53 @@ client.on('message', async (channel, tags, message, self) => { // Marked as asyn
       client.say(channel, 'An error occurred while sending messages.');
     }
   }
-
+  
   //%village and %v related commands
   if(noSpaceCase(message).startsWith('%village') || noSpaceCase(message).startsWith('%v')){
+    let command = noTrigger(message, 'village');
+    command = noTrigger(noSpaceCase(command), 'v');
+    //start village here
+    if(command == 'start')
+    startVillage(channel);
+    
+    
     await handleVillage(client, channel, tags, message);
   }
   
   // Color changing codes
   const matchedColor = colors.find(color => 
     new RegExp(`\\b${color.toLowerCase()}\\b`).test(message.toLowerCase())
-  ) || Object.keys(colorAliases).find(alias => 
-    new RegExp(`\\b${alias}\\b`).test(message.toLowerCase())
-  );
-  if (matchedColor) {
-    // Change the color via Helix API
-    const colorToChange = colorAliases[matchedColor] || matchedColor;
-    await changeColor(colorToChange.toLowerCase());
-    await new Promise(resolve => setTimeout(resolve, 1000)); //let it cook
-    client.say(channel, `/me ♪~ ᕕ(ᐛ)ᕗ`);
-  }
-  
-  //just fake function to show available colors /██
-  if (noSpaceCase(message).toLowerCase().startsWith('%color')){
-    if(noTrigger(message, 'color') == '' || !matchedColor)
-      client.say(channel, '🖍️ available colors are ['+colors+']');
-  }
-});
-
-
-
-
-
-client.on('connected', (addr, port) => {
-  console.log(`MrDestructoid Bot connected at ${addr}:${port}`);
-});
-
-
-
-enterDungeon();
-
-// Connect the bot
-client.connect();
+    ) || Object.keys(colorAliases).find(alias => 
+      new RegExp(`\\b${alias}\\b`).test(message.toLowerCase())
+      );
+      if (matchedColor) {
+        // Change the color via Helix API
+        const colorToChange = colorAliases[matchedColor] || matchedColor;
+        await changeColor(colorToChange.toLowerCase());
+        await new Promise(resolve => setTimeout(resolve, 1000)); //let it cook
+        client.say(channel, `/me ♪~ ᕕ(ᐛ)ᕗ`);
+      }
+      
+      //just fake function to show available colors /██
+      if (noSpaceCase(message).toLowerCase().startsWith('%color')){
+        if(noTrigger(message, 'color') == '' || !matchedColor)
+        client.say(channel, '🖍️ available colors are ['+colors+']');
+      }
+    });
+    
+    
+    
+    
+    
+    client.on('connected', (addr, port) => {
+      console.log(`MrDestructoid Bot connected at ${addr}:${port}`);
+    });
+    
+    
+    //Start global tasks on timers
+    scheduleEnemySpawn();
+    scheduleDamageCalculation();
+    enterDungeon();
+    
+    // Connect the bot
+    client.connect();
