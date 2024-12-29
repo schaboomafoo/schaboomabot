@@ -9,7 +9,7 @@ const os = require('os'); // To detect the operating system
 //village consts from elsewhere
 const { handleVillage, spawnRandomEnemy, applyDamage } = require('./villageGame/village');
 const { startVillage, villages } = require('./villageGame/state');
-const { noTrigger, noSpaceCase } = require('./sharedUtils');
+const { noTrigger, noSpaceCase, getArgument, isCommand } = require('./sharedUtils');
 
 
 
@@ -265,41 +265,82 @@ client.on('message', async (channel, tags, message, self) => { // Marked as asyn
   if(noSpaceCase(message).startsWith('%village') || noSpaceCase(message).startsWith('%v')){
     await handleVillage(client, channel, tags, message);
   }
+
   
   // Color changing codes
   const matchedColor = colors.find(color => 
     new RegExp(`\\b${color.toLowerCase()}\\b`).test(message.toLowerCase())
-    ) || Object.keys(colorAliases).find(alias => 
-      new RegExp(`\\b${alias}\\b`).test(message.toLowerCase())
-      );
-      if (matchedColor) {
-        // Change the color via Helix API
-        const colorToChange = colorAliases[matchedColor] || matchedColor;
-        await changeColor(colorToChange.toLowerCase());
-        await new Promise(resolve => setTimeout(resolve, 1000)); //let it cook
-        client.say(channel, `/me ♪~ ᕕ(ᐛ)ᕗ`);
-      }
-      
-      //just fake function to show available colors /██
-      if (noSpaceCase(message).toLowerCase().startsWith('%color')){
-        if(noTrigger(message, 'color') == '' || !matchedColor)
-        client.say(channel, '🖍️ available colors are ['+colors+']');
-      }
-    });
+  ) || Object.keys(colorAliases).find(alias => 
+    new RegExp(`\\b${alias}\\b`).test(message.toLowerCase())
+  );
+
+  if (matchedColor) {
+    //Change the color via Helix API
+    const colorToChange = colorAliases[matchedColor] || matchedColor;
+    await changeColor(colorToChange.toLowerCase());
+    await new Promise(resolve => setTimeout(resolve, 1000)); //let it cook
+    client.say(channel, `/me ♪~ ᕕ(ᐛ)ᕗ`);
+  }
+
+  // Just fake function to show available colors
+  if (noSpaceCase(message).toLowerCase().startsWith('%color')) {
+    if (noTrigger(message, 'color') === '' || !matchedColor) {
+      client.say(channel, '🖍️ available colors are [' + colors + ']');
+    }
+  }
     
+  //rolling / coin flip 'game'
+  let argToNum = parseFloat(noTrigger(message, '').trim().split(' ')[0]);
+  if(message.startsWith('%') && !isNaN(argToNum) && argToNum > 0 && argToNum < 100){
+    let roll = Math.random()*100;
     
-    
-    
-    
-    client.on('connected', (addr, port) => {
-      console.log(`MrDestructoid Bot connected at ${addr}:${port}`);
-    });
-    
-    
-    //Start global tasks on timers
-    scheduleEnemySpawn();
-    scheduleDamageCalculation();
-    enterDungeon();
-    
-    // Connect the bot
-    client.connect();
+    let digits = argToNum.toString().replace('.', '').length;
+    if(digits==1 && roll>=10) digits++;
+
+    let truncatedRoll = Number(roll.toPrecision(digits)) //truncate both to same digits
+    if(truncatedRoll < argToNum)
+      client.say(channel, `YESIDOTHINKSO ${truncatedRoll} < ${argToNum}`);
+    else
+    client.say(channel, `NOIDONTTHINKSO ${truncatedRoll} !< ${argToNum}`);
+  }
+
+  //wow-esque roll command (1-arg)
+  if((isCommand(message, 'roll')) && Number(getArgument(message, 'roll')) && !getArgument(message, 'roll').includes('.')){
+    let maxRoll = parseInt(getArgument(message, 'roll'), 10); // Force integer input
+    if (!isNaN(maxRoll) && maxRoll > 0) {
+      // Generate a random roll
+      let roll = Math.random() * (maxRoll-1) + 1; //roll between 1-argument
+
+      // Get the number of significant digits in maxRoll
+      let digits = maxRoll.toString().replace('.', '').length;
+
+      // Truncate the roll to match the significant digits of maxRoll
+      let truncatedRoll = Math.floor(roll.toPrecision(digits));
+
+      // Output the result
+      client.say(channel, `🎲 ${truncatedRoll.toLocaleString()}`);
+    }
+  }
+
+
+});
+
+
+
+
+
+client.on('connected', (addr, port) => {
+  console.log(`MrDestructoid Bot connected at ${addr}:${port}`);
+});
+
+
+//Start global tasks on timers
+scheduleEnemySpawn();
+scheduleDamageCalculation();
+enterDungeon();
+
+// Connect the bot
+client.connect();
+
+
+//add death and birth messages (if possible)
