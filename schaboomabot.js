@@ -299,9 +299,9 @@ client.on('message', async (channel, tags, message, self) => { // Marked as asyn
 
     let truncatedRoll = Number(roll.toPrecision(digits)) //truncate both to same digits
     if(truncatedRoll < argToNum)
-      client.say(channel, `YESIDOTHINKSO ${truncatedRoll} < ${argToNum}`);
+      client.say(channel, `✅  ${truncatedRoll} < ${argToNum}`);
     else
-    client.say(channel, `NOIDONTTHINKSO ${truncatedRoll} !< ${argToNum}`);
+    client.say(channel, `❌  ${truncatedRoll} !< ${argToNum}`);
   }
 
   //wow-esque roll command (1-arg)
