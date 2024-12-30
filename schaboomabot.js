@@ -266,7 +266,14 @@ client.on('message', async (channel, tags, message, self) => { // Marked as asyn
   
   //%village and %v related commands
   if(noSpaceCase(message).startsWith('%village') || noSpaceCase(message).startsWith('%v')){
-    await handleVillage(client, channel, tags, message);
+    let varg = '';
+
+    if(isCommand(message, 'village'))
+      varg = noTrigger(message, 'village');
+    else if(isCommand(message, 'v'))
+      varg = noTrigger(message, 'v');
+
+    await handleVillage(client, channel, tags, varg);
   }
   
   

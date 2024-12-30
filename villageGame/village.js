@@ -54,10 +54,7 @@ function applyDamage(client, channel, villageState) {
     }
 }
 
-const handleVillage = async(client, channel, tags, message) => {
-    let command = noTrigger(message, 'village');
-    command = noTrigger(noSpaceCase(command), 'v');
-    //client.say(channel, 'no trigger: '+command);
+const handleVillage = async(client, channel, tags, command) => {
 
     const villageState = getVillageState(channel);
 

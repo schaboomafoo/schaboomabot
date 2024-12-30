@@ -7,8 +7,11 @@ function noSpaceCase(inp){
 //no trigger works with single words, like % command (args) will return (args) trimmed
 //it removes spaces from left to right until string starts with trigger, then trims the result and returns it
 function noTrigger(inp, t){
-  while (!inp.startsWith('%' + t))
+  while (!inp.startsWith('%' + t)){
+    console.log(`inp: ${inp}\nt: ${t}`);
     inp = inp.replace(" ", "");
+    console.log(inp);
+  }
 
   inp = inp.slice(t.length+1);
 
