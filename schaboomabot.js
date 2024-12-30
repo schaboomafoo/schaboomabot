@@ -9,7 +9,7 @@ const os = require('os'); // To detect the operating system
 //village consts from elsewhere
 const { handleVillage, spawnRandomEnemy, applyDamage } = require('./villageGame/village');
 const { startVillage, villages } = require('./villageGame/state');
-const { noTrigger, noSpaceCase, getArgument, isCommand } = require('./sharedUtils');
+const { noSpaceCase, noTrigger, getArgument, isCommand } = require('./sharedUtils');
 
 
 
@@ -158,6 +158,9 @@ client.on('message', async (channel, tags, message, self) => { // Marked as asyn
   //basic hi response command
   if (message === 'hi') {client.say(channel, `MrDestructoid hi ${tags.username}`);}
   
+  //basic "make him say this" command
+  if(isCommand(message, "say")){client.say(channel, noTrigger(message, "say"));}
+  
   //checking battery
   if (noSpaceCase(message.toLowerCase()).startsWith('%battery')) { //very bad
     const battery = await si.battery();
@@ -186,13 +189,13 @@ client.on('message', async (channel, tags, message, self) => { // Marked as asyn
   }
   
   //donating supibot cookies
-  if(noSpaceCase(message).startsWith('%cookie')){
+  if(isCommand(message, 'cookie')){
     if (noTrigger(message, 'cookie') === '') {
       client.say(channel, `$cookie gift ${tags.username}`);
     } 
     else {
-      const args = noTrigger(message, 'cookie').split(' ');
-      client.say(channel, `$cookie gift ${args[0]}`);
+      const args = getArgument(message, 'cookie');
+      client.say(channel, `$cookie gift ${args}`);
     }
   }
   
@@ -221,7 +224,7 @@ client.on('message', async (channel, tags, message, self) => { // Marked as asyn
   }
   
   //sending animations
-  if (noSpaceCase(message).startsWith('%gif')) {
+  if(isCommand(message, 'gif')) {
     //parse gaming parse code
     if (noTrigger(message, 'gif') === '') {
       client.say(channel, `FeelsDankMan whaht gif? fors or anime?`);
@@ -265,7 +268,7 @@ client.on('message', async (channel, tags, message, self) => { // Marked as asyn
   if(noSpaceCase(message).startsWith('%village') || noSpaceCase(message).startsWith('%v')){
     await handleVillage(client, channel, tags, message);
   }
-
+  
   
   // Color changing codes
   const matchedColor = colors.find(color => 
@@ -273,7 +276,7 @@ client.on('message', async (channel, tags, message, self) => { // Marked as asyn
   ) || Object.keys(colorAliases).find(alias => 
     new RegExp(`\\b${alias}\\b`).test(message.toLowerCase())
   );
-
+  
   if (matchedColor) {
     //Change the color via Helix API
     const colorToChange = colorAliases[matchedColor] || matchedColor;
@@ -281,16 +284,16 @@ client.on('message', async (channel, tags, message, self) => { // Marked as asyn
     await new Promise(resolve => setTimeout(resolve, 1000)); //let it cook
     client.say(channel, `/me ♪~ ᕕ(ᐛ)ᕗ`);
   }
-
+  
   // Just fake function to show available colors
-  if (noSpaceCase(message).toLowerCase().startsWith('%color')) {
+  if (isCommand(message, 'color')) {
     if (noTrigger(message, 'color') === '' || !matchedColor) {
       client.say(channel, '🖍️ available colors are [' + colors + ']');
     }
   }
-    
+  
   //rolling / coin flip 'game'
-  let argToNum = parseFloat(noTrigger(message, '').trim().split(' ')[0]);
+  let argToNum = parseFloat(getArgument(message, ''));
   if(message.startsWith('%') && !isNaN(argToNum) && argToNum > 0 && argToNum < 100){
     let roll = Math.random()*100;
     
@@ -303,7 +306,7 @@ client.on('message', async (channel, tags, message, self) => { // Marked as asyn
     else
     client.say(channel, `❌  ${truncatedRoll} !< ${argToNum}`);
   }
-
+  
   //wow-esque roll command (1-arg)
   if((isCommand(message, 'roll')) && Number(getArgument(message, 'roll')) && !getArgument(message, 'roll').includes('.')){
     let maxRoll = parseInt(getArgument(message, 'roll'), 10); // Force integer input
@@ -321,7 +324,7 @@ client.on('message', async (channel, tags, message, self) => { // Marked as asyn
       client.say(channel, `🎲 ${truncatedRoll.toLocaleString()}`);
     }
   }
-
+  
 
 });
 
@@ -344,3 +347,4 @@ client.connect();
 
 
 //add death and birth messages (if possible)
+//add %say "message" sanitize "/" start or "."

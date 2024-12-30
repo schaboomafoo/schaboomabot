@@ -1,10 +1,18 @@
-//no trigger works with single words, like % command (args) will return (args) trimmed
-function noTrigger(inp, t){const tReg = new RegExp(`^%?\\s*${t}\\s*`, 'i');return inp.replace(tReg, '').trim();}
-
 //noSpaceCase returns input string with all spaces removed and shifted to lowercase
 function noSpaceCase(inp){
   let outp = inp.toLowerCase();
   return outp.replace(/\s+/g, '');
+}
+
+//no trigger works with single words, like % command (args) will return (args) trimmed
+//it removes spaces from left to right until string starts with trigger, then trims the result and returns it
+function noTrigger(inp, t){
+  while (!inp.startsWith('%' + t))
+    inp = inp.replace(" ", "");
+
+  inp = inp.slice(t.length+1);
+
+  return inp.trim();
 }
 
 //takes input of message, returns argument following given command
@@ -18,7 +26,7 @@ function getArgument(msg, command){
 //returns 1 if message strikes given command, 0 otherwise
 //input cmd must be lowercase command with no '%'
 function isCommand(inp, cmd){
-  if(inp.toLowerCase().replace(/\s+/g, '').startsWith('%'+cmd))
+  if(noSpaceCase(inp).startsWith('%'+cmd))
   return 1;
   return 0;
 }
