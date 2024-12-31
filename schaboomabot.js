@@ -367,4 +367,5 @@ client.connect();
 
 
 //add death and birth messages (if possible)
-//add %say "message" sanitize "/" start or "."
+//fix generate diamond and how it's referenced and called
+//add %animate command, to take emote, convert its frames to ascii, then gif it in chat
