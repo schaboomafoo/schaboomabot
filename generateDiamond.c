@@ -8,6 +8,7 @@
 int** recursiveGeneration(int** previous, int n, int remaining);
 void printArray(int **input, int size);
 char* twitchMessage(int **input, int order);
+char* colored(int **input, int order);
 
 //arguments intended to be (order) or (file order #ofDiamonds)
 int main(int argc, char* argv[]){
@@ -16,12 +17,11 @@ int main(int argc, char* argv[]){
         order = 4;
     else
         order=atoi(argv[1])-1;
-    if(order < 0){
-        printf("invalid order provided, must be integer between 2 and 8\n");
+    if(order < 0 || order >=11){
+        printf("invalid order provided, must be integer between 2 and 11\n");
         return 0;
     }
     srand(time(NULL));
-
 
     int** base = (int**)malloc(2 * sizeof(int*));
     for (int i = 0; i < 2; i++){
@@ -38,7 +38,7 @@ int main(int argc, char* argv[]){
     char result[501];
 
     //fill string
-    printf("%s\n", twitchMessage(tiling, order));
+    printf("%s\n", colored(tiling, order));
 
 
     for(int i=0; i<order*2+2; i++){
@@ -223,7 +223,10 @@ void printArray(int **input, int size){
 }
 
 //Y north, R west, G east, B south
+//for now this is going to be destroyed and replaced with more generic code, then the context will be added in js
 char* twitchMessage(int **input, int order){
+    printf("%d is the 'order'\n",order);
+
     if(order > 7)
         return("this diamond is too large to display in twitch chat\n");
     else if(order < 1)
@@ -298,3 +301,74 @@ char* twitchMessage(int **input, int order){
 
     return result;
 }
+
+
+char* colored(int **input, int order){
+    char *result = malloc((order*2+2) * ((order*2+2) * 5 + 1)); //each square separated by spaces with null terminator
+    if (result == NULL) {
+        perror("Failed to allocate memory");
+        exit(EXIT_FAILURE);
+    }
+
+    if(order >= 11)
+        return "as of right now nop";
+
+    for(int i=0; i<order*2+2; i++){
+        for(int j=0; j<order*2+2; j++){
+
+            if(input[i][j] == -1)
+                strcat(result, "⠀");
+            else if((input[i][j]==1 && ((i+j)%2!=order%2)) || input[i][j]==3 && ((i+j)%2==order%2)){ //blue (south)
+                if((i+j)%2==order%2)
+                    strcat(result, "⠒");
+                else
+                    strcat(result, "⠒");
+            }
+            else if((input[i][j]==1 && ((i+j)%2==order%2)) || input[i][j]==3 && ((i+j)%2!=order%2)){ //yellow (north)
+                if((i+j)%2==order%2)
+                    strcat(result, "⠒");
+                else
+                    strcat(result, "⠒");
+            }
+            else if((input[i][j]==2 && ((i+j)%2!=order%2)) || input[i][j]==4 && ((i+j)%2==order%2)){ //green (east)
+                if((i+j)%2==order%2)
+                    strcat(result, "⠸");
+                else
+                    strcat(result, "⠸");
+            }
+            else if((input[i][j]==2 && ((i+j)%2==order%2)) || input[i][j]==4 && ((i+j)%2!=order%2)){ //red (west)
+                if((i+j)%2==order%2)
+                    strcat(result, "⠸");
+                else
+                    strcat(result, "⠸");
+            }
+
+            //NSEW ⠉⠤⠸⠇
+            //⠒⠸⠀
+            //strcat(result, " ");
+
+
+            //if(strlen(result) >= (order*2+2) * ((order*2+2) * 5 + 1))
+            if(strlen(result) >= 1450)
+                return result;
+        }
+        strcat(result, "\n");
+    }
+
+    return result;
+}
+
+//create program to save several strings to a file, 
+//specifically strings that demonstrate the domino shuffling algorithm
+//to keep everything in place so that it looks good while it's cycling, add filler on all sides of the diamond
+//so that as it "expands" it's actually expanding from the center, 
+//go from order 0 to order 11 (since that's the biggest i can show in chat with ascii)
+
+//edit this to be simply like a library function call, then based on input, modify output in js
+//like > order 8? convert all values to ascii equivalents (up to order 11)
+
+//create separate(?) file to output each step (maybe just a flag)
+//then write each step to a file
+//the cycle through the strings to visualize the algorithm, long delay between frames
+//be able to use ascii or emotes, add special emote for void space?
+//with ascii draw initial 2x2 in the middle where the center ends up for order 11
