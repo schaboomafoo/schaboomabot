@@ -38,7 +38,7 @@ int main(int argc, char* argv[]){
     char result[501];
 
     //fill string
-    printf("%s\n", colored(tiling, order));
+    printf("%s\n", twitchMessage(tiling, order));
 
 
     for(int i=0; i<order*2+2; i++){
@@ -225,7 +225,6 @@ void printArray(int **input, int size){
 //Y north, R west, G east, B south
 //for now this is going to be destroyed and replaced with more generic code, then the context will be added in js
 char* twitchMessage(int **input, int order){
-    printf("%d is the 'order'\n",order);
 
     if(order > 7)
         return("this diamond is too large to display in twitch chat\n");
